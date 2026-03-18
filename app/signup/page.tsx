@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -8,12 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, isAdmin } from "@/lib/auth-context";
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup } = useAuth();
+  const { signup, logout, isAuthenticated, isReady, role: userRole } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (!isReady) return;
+    if (isAuthenticated) {
+      router.replace(isAdmin(userRole) ? "/admin/dashboard" : "/dashboard");
+    }
+  }, [isReady, isAuthenticated, userRole, router]);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,12 +38,12 @@ export default function SignupPage() {
   const hasSymbol = /[!@#$%^&*(),.?":{}|<>_\-\\[\]/+=~]/.test(password);
 
   // Regular expression to disallow commas, brackets, and spaces
-  const invalidPasswordChars = /[,\[\]\(\)\s]/; // Added \s for space
+  const invalidPasswordChars = /[,\[\]\(\)\s`]/;
 
   let passwordMessage = "";
   if (password.length > 0) {
     if (invalidPasswordChars.test(password)) {
-      passwordMessage = "Password cannot contain commas, brackets, parentheses, or spaces.";
+      passwordMessage = "Password cannot contain commas, brackets, parentheses, spaces, or backtick (`).";
     } else if (!hasMinLength && !hasSymbol) {
       passwordMessage = "Password must be at least 8 characters and include a special symbol.";
     } else if (!hasMinLength) {
@@ -88,7 +95,7 @@ export default function SignupPage() {
     }
     if (invalidPasswordChars.test(password)) {
       setErrorMessage(
-        "Password cannot contain commas, brackets, parentheses, or spaces."
+        "Password cannot contain commas, brackets, parentheses, spaces, or backtick (`)."
       );
       return;
     }
@@ -101,21 +108,22 @@ export default function SignupPage() {
 
     setIsSubmitting(true);
     try {
-      const success = await signup({
+      const result = await signup({
         name,
         email,
         password,
         role,
         adminKey: role === "admin" ? adminKey : undefined,
       });
-      if (success) {
+      if (result.success) {
         setErrorMessage("");
         setSuccessMessage("Account created successfully.");
         setIsToastVisible(true);
         setTimeout(() => setIsToastVisible(false), 5000);
-        setTimeout(() => router.push("/dashboard"), 1500);
+        await logout();
+        setTimeout(() => router.push("/login"), 1500);
       } else {
-        setErrorMessage("Signup failed. Please try again.");
+        setErrorMessage(result.error ?? "Signup failed. Please try again.");
       }
     } catch {
       setErrorMessage("Signup failed. Please try again.");
@@ -123,6 +131,14 @@ export default function SignupPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (!isReady || isAuthenticated) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center text-slate-400">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 font-sans text-white">

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
+import { useAuth } from "@/lib/auth-context"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import {
@@ -57,14 +58,11 @@ const activity = [
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [notifications, setNotifications] = useState<NotificationItem[]>([])
-  const [isLoadingNotifications, setIsLoadingNotifications] = useState(true)
-  const [notificationError, setNotificationError] = useState("")
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { isAuthenticated, isReady } = useAuth()
+  const [notifications] = useState<NotificationItem[]>([])
+  const [isLoadingNotifications] = useState(false)
+  const [notificationError] = useState("")
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([])
-
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000"
 
   const activeNotification = useMemo(() => {
     return notifications.find(
@@ -73,59 +71,11 @@ export default function DashboardPage() {
   }, [notifications, dismissedNotificationIds])
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
-          credentials: "include",
-        })
-        if (!response.ok) {
-          router.replace("/login")
-          return
-        }
-        const data = await response.json()
-        if (!data?.authenticated) {
-          router.replace("/login")
-          return
-        }
-        setIsAuthenticated(true)
-      } catch (error) {
-        router.replace("/login")
-      }
+    if (!isReady) return
+    if (!isAuthenticated) {
+      router.replace("/login")
     }
-
-    checkSession()
-  }, [apiBaseUrl, router])
-
-  useEffect(() => {
-    if (!isAuthenticated) return
-    const loadNotifications = async () => {
-      setIsLoadingNotifications(true)
-      setNotificationError("")
-
-      try {
-        const response = await fetch(
-          `${apiBaseUrl}/api/auth/notifications?includeRead=true`,
-          {
-          credentials: "include",
-          }
-        )
-        const data = await response.json()
-        if (!response.ok) {
-          setNotificationError(data?.error || "Unable to load notifications.")
-          setNotifications([])
-          return
-        }
-        setNotifications(data?.notifications || [])
-      } catch (error) {
-        setNotificationError("Unable to load notifications.")
-        setNotifications([])
-      } finally {
-        setIsLoadingNotifications(false)
-      }
-    }
-
-    loadNotifications()
-  }, [apiBaseUrl, isAuthenticated])
+  }, [isReady, isAuthenticated, router])
 
   useEffect(() => {
     if (!activeNotification) return
@@ -139,6 +89,14 @@ export default function DashboardPage() {
 
     return () => window.clearTimeout(timer)
   }, [activeNotification])
+
+  if (!isReady || !isAuthenticated) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-slate-400">
+        <p>Loading...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-full bg-zinc-950 font-sans text-white">
