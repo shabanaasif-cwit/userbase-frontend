@@ -9,10 +9,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
-<<<<<<< Updated upstream
-=======
-import { useAuth, authValidation } from "@/lib/auth-context";
->>>>>>> Stashed changes
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,31 +23,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setErrorMessage("");
 
-<<<<<<< Updated upstream
     // Validate password length
     if (password.length < 8) {
-=======
-    if (!email.trim()) {
-      setErrorMessage("Email is required.");
-      return;
-    }
-    if (!authValidation.emailFormat(email)) {
-      setErrorMessage("Please enter a valid email address.");
-      return;
-    }
-    if (!password) {
-      setErrorMessage("Password is required.");
-      return;
-    }
-    if (password.length < authValidation.passwordMinLength) {
->>>>>>> Stashed changes
       setErrorMessage("Password must be at least 8 characters.");
       return; // Stop form submission if validation fails
     }
 
     setIsSubmitting(true);
+    setErrorMessage("");
 
     try {
       const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
@@ -116,13 +96,8 @@ export default function LoginPage() {
                     placeholder="you@example.com"
                     className="h-11 text-base"
                     value={email}
-<<<<<<< Updated upstream
                     onChange={(event) => setEmail(event.target.value)}
                     required // Email is required
-=======
-                    onChange={(e) => { setEmail(e.target.value); setErrorMessage(""); }}
-                    required
->>>>>>> Stashed changes
                   />
                 </div>
 
@@ -138,13 +113,8 @@ export default function LoginPage() {
                       placeholder="Enter your password"
                       className="h-11 pr-10 text-base"
                       value={password}
-<<<<<<< Updated upstream
                       onChange={(event) => setPassword(event.target.value)}
                       required // Password is required
-=======
-                      onChange={(e) => { setPassword(e.target.value); setErrorMessage(""); }}
-                      required
->>>>>>> Stashed changes
                     />
 
                     <button

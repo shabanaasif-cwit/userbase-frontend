@@ -1,0 +1,306 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export default function SignupPage() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState(""); // Phone number state
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState(""); // Initially empty
+  const [adminKey, setAdminKey] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isToastVisible, setIsToastVisible] = useState(false); // Toast visibility state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const hasMinLength = password.length >= 8;
+  const hasSymbol = /[!@#$%^&*(),.?":{}|<>_\-\\[\]/+=~]/.test(password);
+
+  // Regular expression to disallow commas, brackets, and spaces
+  const invalidPasswordChars = /[,\[\]\(\)\s]/; // Added \s for space
+
+  let passwordMessage = "";
+  if (password.length > 0) {
+    if (invalidPasswordChars.test(password)) {
+      passwordMessage = "Password cannot contain commas, brackets, parentheses, or spaces.";
+    } else if (!hasMinLength && !hasSymbol) {
+      passwordMessage = "Password must be at least 8 characters and include a special symbol.";
+    } else if (!hasMinLength) {
+      passwordMessage = "Password must be at least 8 characters.";
+    } else if (!hasSymbol) {
+      passwordMessage = "Password must include at least one special symbol.";
+    }
+  }
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Reset any previous error messages
+    setErrorMessage("");
+
+    // Manually validate and set custom validation messages for required fields
+    if (!name.trim()) {
+      setErrorMessage("Full name is required.");
+      return;
+    }
+    if (!email.trim()) {
+      setErrorMessage("Email is required.");
+      return;
+    }
+    if (!phone.trim()) {
+      setErrorMessage("Phone number is required.");
+      return;
+    } else if (phone.length !== 11 || !/^\d{11}$/.test(phone)) {
+      setErrorMessage("Phone number must be exactly 11 digits.");
+      return;
+    }
+    if (!password.trim()) {
+      setErrorMessage("Password is required.");
+      return;
+    }
+    if (!confirmPassword.trim()) {
+      setErrorMessage("Confirm password is required.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
+    if (!role) {
+      setErrorMessage("Role is required.");
+      return;
+    }
+    if (role === "admin" && !adminKey.trim()) {
+      setErrorMessage("Admin key is required for admin signup.");
+      return;
+    }
+    if (invalidPasswordChars.test(password)) {
+      setErrorMessage("Password cannot contain commas, brackets, parentheses, or spaces.");
+      return;
+    }
+    if (!hasMinLength && !hasSymbol) {
+      setErrorMessage("Password must be at least 8 characters and include a special symbol.");
+      return;
+    }
+    if (!hasMinLength) {
+      setErrorMessage("Password must be at least 8 characters.");
+      return;
+    }
+    if (!hasSymbol) {
+      setErrorMessage("Password must include at least one special symbol.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+    setSuccessMessage("Account created successfully.");
+    setIsToastVisible(true);
+    setTimeout(() => {
+      setIsToastVisible(false);
+    }, 5000);
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 font-sans text-white">
+      <main className="mx-auto w-full max-w-4xl px-6 py-16">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <Card className="border-white/10 bg-white/5 text-white">
+            <CardHeader>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-300">Create account</p>
+              <CardTitle className="text-3xl">Sign up</CardTitle>
+              <p className="text-sm text-slate-300">
+                Join the User Management System to manage profiles, roles, and secure access.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3 text-sm text-slate-300">
+                <li>Role-based access controls</li>
+                <li>Secure authentication flows</li>
+                <li>Quick onboarding for teams</li>
+              </ul>
+            </CardContent>
+          </Card>
+          <Card className="border-white/10 bg-white/5 text-white">
+            <CardHeader>
+              <CardTitle className="text-xl">Create account</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-slate-200">
+                    Full Name <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="input-field"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-slate-200">
+                    Email <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="input-field"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-slate-200">
+                    Phone Number <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="text"
+                    placeholder="Enter your phone number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    className="input-field"
+                    maxLength={11} // Limit to 11 characters
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-slate-200">
+                    Password <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Create a password"
+                      className="pr-10 input-field"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  {passwordMessage && <p className="text-sm text-red-400">{passwordMessage}</p>}
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-slate-200">
+                    Confirm Password <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm your password"
+                      className="pr-10 input-field"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200"
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  {password !== confirmPassword && confirmPassword && (
+                    <p className="text-sm text-red-400">Passwords do not match.</p>
+                  )}
+                </div>
+
+                {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
+                {successMessage && <p className="text-sm text-green-400">{successMessage}</p>}
+
+                {/* Role Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="role" className="text-slate-200">
+                    Role <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="role"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="h-8 w-full rounded-lg border border-white/10 bg-slate-950/40 px-2.5 text-sm text-white focus:border-sky-400 focus:outline-none"
+                    required
+                  >
+                    <option value="">Select a role</option> {/* Placeholder option */}
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                {role === "admin" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="adminKey" className="text-slate-200">
+                      Admin Key <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="adminKey"
+                      type="password"
+                      placeholder="Enter admin signup key"
+                      value={adminKey}
+                      onChange={(e) => setAdminKey(e.target.value)}
+                      required
+                      className="input-field"
+                    />
+                  </div>
+                )}
+                <Button className="w-full" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating..." : "Create account"}
+                </Button>
+                <p className="text-center text-sm text-slate-400">
+                  Already have an account?{" "}
+                  <Link href="/login" className="text-sky-300 hover:text-sky-200 hover:underline underline-offset-4">
+                    Sign in
+                  </Link>
+                </p>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+      {/* Toast-style Notification for Success */}
+      {isToastVisible && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-md shadow-lg w-96">
+          <div className="flex justify-between items-center">
+            <p className="text-lg">{successMessage}</p>
+            <button
+              onClick={() => setIsToastVisible(false)} // Close the toast
+              className="text-white font-bold"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
