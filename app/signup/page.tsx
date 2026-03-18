@@ -2,13 +2,17 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth-context";
 
 export default function SignupPage() {
+  const router = useRouter();
+  const { signup } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState("");
@@ -42,13 +46,10 @@ export default function SignupPage() {
     }
   }
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Reset any previous error messages
     setErrorMessage("");
 
-    // Manually validate and set custom validation messages for required fields
     if (!name.trim()) {
       setErrorMessage("Full name is required.");
       return;
@@ -60,7 +61,8 @@ export default function SignupPage() {
     if (!phone.trim()) {
       setErrorMessage("Phone number is required.");
       return;
-    } else if (phone.length !== 11 || !/^\d{11}$/.test(phone)) {
+    }
+    if (phone.length !== 11 || !/^\d{11}$/.test(phone)) {
       setErrorMessage("Phone number must be exactly 11 digits.");
       return;
     }
@@ -85,30 +87,41 @@ export default function SignupPage() {
       return;
     }
     if (invalidPasswordChars.test(password)) {
-      setErrorMessage("Password cannot contain commas, brackets, parentheses, or spaces.");
+      setErrorMessage(
+        "Password cannot contain commas, brackets, parentheses, or spaces."
+      );
       return;
     }
-    if (!hasMinLength && !hasSymbol) {
-      setErrorMessage("Password must be at least 8 characters and include a special symbol.");
-      return;
-    }
-    if (!hasMinLength) {
-      setErrorMessage("Password must be at least 8 characters.");
-      return;
-    }
-    if (!hasSymbol) {
-      setErrorMessage("Password must include at least one special symbol.");
+    if (!hasMinLength || !hasSymbol) {
+      setErrorMessage(
+        "Password must be at least 8 characters and include a special symbol."
+      );
       return;
     }
 
     setIsSubmitting(true);
-    setErrorMessage("");
-    setSuccessMessage("Account created successfully.");
-    setIsToastVisible(true);
-    setTimeout(() => {
-      setIsToastVisible(false);
-    }, 5000);
-    setIsSubmitting(false);
+    try {
+      const success = await signup({
+        name,
+        email,
+        password,
+        role,
+        adminKey: role === "admin" ? adminKey : undefined,
+      });
+      if (success) {
+        setErrorMessage("");
+        setSuccessMessage("Account created successfully.");
+        setIsToastVisible(true);
+        setTimeout(() => setIsToastVisible(false), 5000);
+        setTimeout(() => router.push("/dashboard"), 1500);
+      } else {
+        setErrorMessage("Signup failed. Please try again.");
+      }
+    } catch {
+      setErrorMessage("Signup failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -289,7 +302,7 @@ export default function SignupPage() {
 
       {/* Toast-style Notification for Success */}
       {isToastVisible && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-md shadow-lg w-96">
+        <div className="fixed top-4 right-4 z-[100] bg-green-500 text-white p-4 rounded-md shadow-lg w-96">
           <div className="flex justify-between items-center">
             <p className="text-lg">{successMessage}</p>
             <button

@@ -9,48 +9,57 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth, authValidation } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // Error message state
+  const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setErrorMessage("");
 
-    // Validate password length
-    if (password.length < 8) {
+    if (!email.trim()) {
+      setErrorMessage("Email is required.");
+      return;
+    }
+    if (!authValidation.emailFormat(email)) {
+      setErrorMessage("Please enter a valid email address.");
+      return;
+    }
+    if (!password) {
+      setErrorMessage("Password is required.");
+      return;
+    }
+    if (password.length < authValidation.passwordMinLength) {
       setErrorMessage("Password must be at least 8 characters.");
-      return; // Stop form submission if validation fails
+      return;
+    }
+    if (authValidation.passwordInvalidChars.test(password)) {
+      setErrorMessage(
+        "Password cannot contain commas, brackets, parentheses, or spaces."
+      );
+      return;
+    }
+    if (!authValidation.passwordHasSymbol(password)) {
+      setErrorMessage("Password must include at least one special symbol.");
+      return;
     }
 
     setIsSubmitting(true);
-    setErrorMessage("");
-
     try {
-      const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        setErrorMessage(data?.error || "Login failed.");
+      const success = await login(email, password);
+      if (success) {
+        router.push("/dashboard");
         return;
       }
-
-      router.push("/profile");
-    } catch (error) {
+      setErrorMessage("Login failed. Please check your email and password.");
+    } catch {
       setErrorMessage("Login failed. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -88,7 +97,7 @@ export default function LoginPage() {
               <form className="space-y-5" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-slate-200">
-                    Email <span className="text-red-500">*</span> {/* Asterisk for required */}
+                    Email <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="email"
@@ -97,15 +106,14 @@ export default function LoginPage() {
                     className="h-11 text-base"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    required // Email is required
+                    required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-slate-200">
-                    Password <span className="text-red-500">*</span> {/* Asterisk for required */}
+                    Password <span className="text-red-500">*</span>
                   </Label>
-
                   <div className="relative">
                     <Input
                       id="password"
@@ -114,14 +122,15 @@ export default function LoginPage() {
                       className="h-11 pr-10 text-base"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
-                      required // Password is required
+                      required
                     />
-
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-200"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showPassword ? (
                         <EyeOff className="h-5 w-5" />
@@ -132,26 +141,37 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Display error message if password is too short */}
-                {errorMessage && <p className="text-sm text-red-400">{errorMessage}</p>}
+                {errorMessage && (
+                  <p className="text-sm text-red-400">{errorMessage}</p>
+                )}
 
                 <div className="flex items-center justify-between text-sm text-slate-400">
                   <label className="flex items-center gap-2">
                     <Checkbox />
                     Remember me
                   </label>
-                  <Link href="/support" className="text-sky-300 hover:text-sky-200 hover:underline underline-offset-4">
+                  <Link
+                    href="/support"
+                    className="text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
+                  >
                     Need help?
                   </Link>
                 </div>
 
-                <Button className="h-11 w-full text-base" type="submit" disabled={isSubmitting}>
+                <Button
+                  className="h-11 w-full text-base"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Signing in..." : "Sign in"}
                 </Button>
 
                 <p className="text-center text-sm text-slate-400">
                   New here?{" "}
-                  <Link href="/signup" className="text-sky-300 hover:text-sky-200 hover:underline underline-offset-4">
+                  <Link
+                    href="/signup"
+                    className="text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
+                  >
                     Create an account
                   </Link>
                 </p>
