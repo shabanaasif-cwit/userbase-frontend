@@ -79,3 +79,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure native select dropdown options are visible (use theme colors) */
+select option {
+  background: var(--card);
+  color: var(--card-foreground);
+}

@@ -56,13 +56,16 @@ export default function AdminDashboardPage() {
             <CardHeader>
               <CardTitle>User management</CardTitle>
               <CardDescription className="text-slate-300">
-                View and manage user accounts (UI placeholder).
+                View and manage user accounts: roles and status.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <span className="text-sm text-slate-400">
-                Coming when backend is available.
-              </span>
+              <Link
+                href="/admin/users"
+                className="text-sm font-medium text-sky-400 hover:text-sky-300 hover:underline"
+              >
+                Go to User management →
+              </Link>
             </CardContent>
           </Card>
         </div>

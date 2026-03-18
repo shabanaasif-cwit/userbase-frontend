@@ -12,6 +12,14 @@ import {
 const STORAGE_KEY = "userbase-auth";
 const ADMIN_EMAILS_KEY = "userbase-admin-emails";
 const REGISTERED_USERS_KEY = "userbase-registered-users";
+const USER_STATUS_KEY = "userbase-user-status";
+
+export type ManagedUser = {
+  email: string;
+  name: string;
+  role: string;
+  status: "active" | "deactivated";
+};
 
 type RegisteredUser = {
   email: string;
@@ -70,6 +78,29 @@ function updateRegisteredUserName(email: string, name: string) {
   }
 }
 
+function getUserStatusMap(): Record<string, "active" | "deactivated"> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(USER_STATUS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function setUserStatusStore(email: string, status: "active" | "deactivated") {
+  try {
+    const lower = email.trim().toLowerCase();
+    const map = getUserStatusMap();
+    map[lower] = status;
+    localStorage.setItem(USER_STATUS_KEY, JSON.stringify(map));
+  } catch {
+    // ignore
+  }
+}
+
 function getAdminEmails(): string[] {
   if (typeof window === "undefined") return [];
   try {
@@ -80,6 +111,53 @@ function getAdminEmails(): string[] {
   } catch {
     return [];
   }
+}
+
+function updateRegisteredUserRole(email: string, newRole: string) {
+  try {
+    const lower = email.trim().toLowerCase();
+    const users = getRegisteredUsers();
+    const updated = users.map((u) =>
+      u.email === lower ? { ...u, role: newRole } : u
+    );
+    localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(updated));
+    const adminEmails = getAdminEmails();
+    const isAdminNow = newRole.toLowerCase() === ROLES.ADMIN;
+    if (isAdminNow && !adminEmails.includes(lower)) {
+      localStorage.setItem(
+        ADMIN_EMAILS_KEY,
+        JSON.stringify([...adminEmails, lower])
+      );
+    } else if (!isAdminNow && adminEmails.includes(lower)) {
+      localStorage.setItem(
+        ADMIN_EMAILS_KEY,
+        JSON.stringify(adminEmails.filter((e) => e !== lower))
+      );
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function getManagedUsers(): ManagedUser[] {
+  const statusMap = getUserStatusMap();
+  return getRegisteredUsers().map((u) => ({
+    email: u.email,
+    name: u.name ?? u.email,
+    role: u.role ?? ROLES.USER,
+    status: (statusMap[u.email] as "active" | "deactivated") ?? "active",
+  }));
+}
+
+export function setUserStatus(
+  email: string,
+  status: "active" | "deactivated"
+): void {
+  setUserStatusStore(email, status);
+}
+
+export function updateUserRole(email: string, role: string): void {
+  updateRegisteredUserRole(email, role);
 }
 
 function addAdminEmail(email: string) {
@@ -192,6 +270,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (u) => u.email === lowerEmail && u.password === password
       );
       if (!match) return false;
+      const status = getUserStatusMap()[lowerEmail];
+      if (status === "deactivated") return false;
       const adminEmails = getAdminEmails();
       const role = adminEmails.includes(lowerEmail) ? ROLES.ADMIN : ROLES.USER;
       const data: AuthUser = {
