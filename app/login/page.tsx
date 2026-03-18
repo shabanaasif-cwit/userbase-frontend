@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
-import { useAuth, authValidation } from "@/lib/auth-context";
+import { useAuth, authValidation, isAdmin } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isReady, role } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (!isReady) return;
+    if (isAuthenticated) {
+      router.replace(isAdmin(role) ? "/admin/dashboard" : "/dashboard");
+    }
+  }, [isReady, isAuthenticated, role, router]);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState("");
@@ -42,7 +49,7 @@ export default function LoginPage() {
     }
     if (authValidation.passwordInvalidChars.test(password)) {
       setErrorMessage(
-        "Password cannot contain commas, brackets, parentheses, or spaces."
+        "Password cannot contain commas, brackets, parentheses, spaces, or backtick (`)."
       );
       return;
     }
@@ -65,6 +72,14 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (!isReady || isAuthenticated) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center text-slate-400">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 font-sans text-white">

@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BellRing, UserRoundKey, CircleUserRound, LayoutDashboard, Images, Info, PhoneCall,LogIn, LogOut   } from 'lucide-react';
@@ -29,9 +29,6 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, onLogout }) => {
   const [activeNotification, setActiveNotification] =
     useState<NotificationItem | null>(null);
 
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
-
   const handleLogout = () => {
     onLogout();
     router.push("/login");
@@ -59,51 +56,6 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, onLogout }) => {
     return String(notificationCount);
   }, [notificationCount]);
 
-  const loadNotifications = async () => {
-    if (!isAuthenticated) return;
-    setIsLoadingNotifications(true);
-    setNotificationError("");
-
-    try {
-      const response = await fetch(
-        `${apiBaseUrl}/api/auth/notifications?includeRead=true`,
-        {
-        credentials: "include",
-        }
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        setNotificationError(data?.error || "Unable to load notifications.");
-        setNotifications([]);
-        return;
-      }
-      setNotifications(data?.notifications || []);
-    } catch (error) {
-      setNotificationError("Unable to load notifications.");
-      setNotifications([]);
-    } finally {
-      setIsLoadingNotifications(false);
-    }
-  };
-
-  const markNotificationRead = async (id: string) => {
-    try {
-      const response = await fetch(
-        `${apiBaseUrl}/api/auth/notifications/${id}/read`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
-      if (!response.ok) {
-        const data = await response.json();
-        setNotificationError(data?.error || "Unable to update notification.");
-      }
-    } catch (error) {
-      setNotificationError("Unable to update notification.");
-    }
-  };
-
   const handleOpenNotification = (item: NotificationItem) => {
     setActiveNotification(item);
     setNotifications((prev) =>
@@ -111,21 +63,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, onLogout }) => {
         notice._id === item._id ? { ...notice, isRead: true } : notice
       )
     );
-    markNotificationRead(item._id);
   };
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setNotifications([]);
-      return;
-    }
-    loadNotifications();
-  }, [apiBaseUrl, isAuthenticated]);
-
-  useEffect(() => {
-    if (!isNotificationsOpen) return;
-    loadNotifications();
-  }, [isNotificationsOpen]);
 
   return (
     <header className="bg-gray-800 text-white p-4">

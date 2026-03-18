@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { buttonVariants } from "@/components/ui/button"
 import {
   Card,
@@ -39,23 +40,10 @@ const quickLinks = [
 
 export default function WelcomePage() {
   const router = useRouter()
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000"
+  const { isAuthenticated } = useAuth()
 
-  const handleViewDashboard = async () => {
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/auth/me`, {
-        credentials: "include",
-      })
-      if (!response.ok) {
-        router.push("/login")
-        return
-      }
-      const data = await response.json()
-      router.push(data?.authenticated ? "/dashboard" : "/login")
-    } catch (error) {
-      router.push("/login")
-    }
+  const handleViewDashboard = () => {
+    router.push(isAuthenticated ? "/dashboard" : "/login")
   }
 
   return (
