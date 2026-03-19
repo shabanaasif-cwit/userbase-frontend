@@ -110,7 +110,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-full bg-zinc-950 font-sans text-white">
-      <main className="mx-auto w-full max-w-6xl px-6 py-20">
+      <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-20">
         <Alert className="mb-6 border-white/10 bg-white/5 text-white">
           <AlertTitle>System status</AlertTitle>
           <AlertDescription>
@@ -268,11 +268,11 @@ export default function DashboardPage() {
                 </Card>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-6 overflow-x-auto">
                 <p className="text-sm font-medium text-zinc-300">
                   Recent activity
                 </p>
-                <Table className="mt-3 text-white">
+                <Table className="mt-3 min-w-[320px] text-white">
                   <TableHeader>
                     <TableRow className="border-white/10">
                       <TableHead className="text-zinc-400">User</TableHead>
