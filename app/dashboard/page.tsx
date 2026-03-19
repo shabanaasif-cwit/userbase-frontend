@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { getNotificationsForUser } from "@/lib/notifications-store"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import {
@@ -37,9 +38,10 @@ type NotificationItem = {
   _id: string
   title: string
   message: string
-  startsAt: string | null
-  endsAt: string | null
+  startsAt?: string | null
+  endsAt?: string | null
   createdAt?: string
+  updatedAt?: string
 }
 
 const stats = [
@@ -58,11 +60,19 @@ const activity = [
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { isAuthenticated, isReady } = useAuth()
-  const [notifications] = useState<NotificationItem[]>([])
+  const { user, isAuthenticated, isReady, role } = useAuth()
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [isLoadingNotifications] = useState(false)
   const [notificationError] = useState("")
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([])
+
+  useEffect(() => {
+    if (user?.email) {
+      setNotifications(getNotificationsForUser(user.email, role))
+    } else {
+      setNotifications([])
+    }
+  }, [user?.email, role])
 
   const activeNotification = useMemo(() => {
     return notifications.find(
@@ -314,15 +324,30 @@ export default function DashboardPage() {
                     <p className="mt-2 text-sm text-zinc-200">
                       {item.message}
                     </p>
+                    {item.updatedAt && (
+                      <span className="mt-2 inline-block rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
+                        Edited
+                      </span>
+                    )}
                   </div>
                 ))
               )}
-              <Link
-                href="/support"
-                className={cn(buttonVariants({ variant: "secondary" }))}
-              >
-                Need help?
-              </Link>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Link
+                  href={role === "admin" ? "/admin/notifications" : "/notifications"}
+                  className={cn(
+                    "text-sm font-medium text-sky-400 hover:text-sky-300 hover:underline underline-offset-4"
+                  )}
+                >
+                  View all
+                </Link>
+                <Link
+                  href="/support"
+                  className={cn(buttonVariants({ variant: "secondary" }))}
+                >
+                  Need help?
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </section>

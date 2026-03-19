@@ -12,7 +12,7 @@ interface AppShellProps {
 
 export default function AppShell({ children }: AppShellProps) {
   const router = useRouter();
-  const { isAuthenticated, role, logout } = useAuth();
+  const { user, isAuthenticated, role, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -24,6 +24,7 @@ export default function AppShell({ children }: AppShellProps) {
       <Header
         role={role}
         isAuthenticated={isAuthenticated}
+        userEmail={user?.email}
         onLogout={handleLogout}
       />
       <div className="flex-1">{children}</div>
