@@ -1,9 +1,4 @@
-"use client"
-
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
-import { buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -11,7 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+import WelcomeCTA from "./component/welcome-cta"
+
+export const revalidate = 3600 // ISR: revalidate home every hour
 
 const highlights = [
   {
@@ -39,13 +36,6 @@ const quickLinks = [
 ]
 
 export default function WelcomePage() {
-  const router = useRouter()
-  const { isAuthenticated } = useAuth()
-
-  const handleViewDashboard = () => {
-    router.push(isAuthenticated ? "/dashboard" : "/login")
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-zinc-950 to-slate-900 font-sans text-white">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 py-16 lg:py-24">
@@ -65,31 +55,7 @@ export default function WelcomePage() {
                 Start with the essentials, scale as you grow, and keep every
                 team aligned with the right level of access.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href="/signup"
-                  className={cn(buttonVariants({ size: "lg" }))}
-                >
-                  Create account
-                </Link>
-                <Link
-                  href="/login"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "lg" })
-                  )}
-                >
-                  Sign in
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleViewDashboard}
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "lg" })
-                  )}
-                >
-                  View dashboard
-                </button>
-              </div>
+              <WelcomeCTA />
             </div>
 
             <Card className="border-white/10 bg-white/5 text-white">

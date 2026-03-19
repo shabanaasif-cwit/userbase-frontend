@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth, isAdmin } from "@/lib/auth-context";
+import { getNotificationsForUser, markNotificationsAsRead } from "@/lib/notifications-store";
 
 type NotificationItem = {
   _id: string;
   title: string;
   message: string;
   createdAt?: string;
+  updatedAt?: string;
   isRead?: boolean;
 };
 
@@ -32,9 +34,17 @@ function getInitials(name?: string | null, email?: string) {
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isAuthenticated, isReady, role } = useAuth();
-  const [notifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeNotification, setActiveNotification] =
     useState<NotificationItem | null>(null);
+
+  useEffect(() => {
+    if (user?.email) {
+      setNotifications(getNotificationsForUser(user.email, role));
+    } else {
+      setNotifications([]);
+    }
+  }, [user?.email, role]);
 
   const profile = user
     ? { id: "", name: user.name ?? "", email: user.email, role }
@@ -157,9 +167,30 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-slate-300">
               <div className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                  Notifications
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                    Notifications
+                  </p>
+                  {notifications.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (user?.email) {
+                          markNotificationsAsRead(
+                            user.email,
+                            notifications.map((n) => n._id)
+                          );
+                          setNotifications(
+                            getNotificationsForUser(user.email, role)
+                          );
+                        }
+                      }}
+                      className="text-xs text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
+                    >
+                      Read all
+                    </button>
+                  )}
+                </div>
                 {notifications.length === 0 ? (
                   <p className="mt-2 text-sm text-slate-300">
                     No new notifications yet.
@@ -170,7 +201,13 @@ export default function ProfilePage() {
                       <button
                         key={item._id}
                         type="button"
-                        onClick={() => setActiveNotification(item)}
+                        onClick={() => {
+                          if (user?.email) {
+                            markNotificationsAsRead(user.email, [item._id]);
+                            setNotifications(getNotificationsForUser(user.email, role));
+                          }
+                          setActiveNotification(item);
+                        }}
                         className="w-full cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-left transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
                       >
                         <p className="text-sm font-semibold text-white">
@@ -179,6 +216,11 @@ export default function ProfilePage() {
                         <p className="mt-1 text-xs text-slate-300">
                           {item.message}
                         </p>
+                        {item.updatedAt && (
+                          <span className="mt-1.5 inline-block rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
+                            Edited
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -290,13 +332,31 @@ export default function ProfilePage() {
                   {activeNotification.title}
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveNotification(null)}
-                className="cursor-pointer rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300 hover:text-white"
-              >
-                Close
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (user?.email && notifications.length > 0) {
+                      markNotificationsAsRead(
+                        user.email,
+                        notifications.map((n) => n._id)
+                      );
+                      setNotifications(getNotificationsForUser(user.email, role));
+                    }
+                    setActiveNotification(null);
+                  }}
+                  className="cursor-pointer rounded-full border border-white/10 px-3 py-1 text-xs text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
+                >
+                  Read all
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveNotification(null)}
+                  className="cursor-pointer rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300 hover:text-white"
+                >
+                  Close
+                </button>
+              </div>
             </div>
             <p className="mt-4 text-sm text-slate-300">
               {activeNotification.message}

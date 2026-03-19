@@ -1,12 +1,18 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import PageShell from "../component/page-shell"
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic" // SSR: always fresh for support info
+
+export const metadata = {
+  title: "Support | Userbase",
+  description:
+    "Support center for the User Management System. Get help with account access, usage, and troubleshooting.",
+}
 
 export default function SupportPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 font-sans text-white">
-      <main className="mx-auto w-full max-w-5xl px-6 py-16">
+    <PageShell variant="dark" maxWidth="default">
         <Card className="border-white/10 bg-white/5 text-white">
           <CardHeader>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-300">
@@ -97,7 +103,6 @@ export default function SupportPage() {
             </Card>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </PageShell>
   )
 }

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle,} from "@/components/ui/card"
-import { ArrowRight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ArrowRight } from "lucide-react"
+import PageShell from "../component/page-shell"
 
 const galleryItems = [
   {
@@ -29,11 +30,18 @@ const galleryItems = [
   },
 ]
 
+export const revalidate = 86400 // ISR: revalidate daily
+
+export const metadata = {
+  title: "Gallery | Userbase",
+  description:
+    "Highlights and capabilities of the User Management System. Team collaboration, secure access, and audit insights.",
+}
+
 export default function GalleryPage() {
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 dark:bg-black dark:text-zinc-50">
-      <main className="mx-auto w-full max-w-6xl px-6 py-16">
-        <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <PageShell variant="light" maxWidth="wide">
+      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
               Gallery
@@ -70,7 +78,6 @@ export default function GalleryPage() {
             </Card>
           ))}
         </section>
-      </main>
-    </div>
+    </PageShell>
   )
 }
