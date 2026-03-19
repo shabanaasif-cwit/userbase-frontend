@@ -83,8 +83,9 @@ function getUserStatusMap(): Record<string, "active" | "deactivated"> {
   try {
     const raw = localStorage.getItem(USER_STATUS_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, string>;
-    return typeof parsed === "object" && parsed !== null ? parsed : {};
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return {};
+    return parsed as Record<string, "active" | "deactivated">;
   } catch {
     return {};
   }
