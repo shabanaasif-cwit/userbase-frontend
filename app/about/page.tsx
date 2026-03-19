@@ -1,14 +1,18 @@
-
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import PageShell from "../component/page-shell"
 
 export const revalidate = 86400
 
+export const metadata = {
+  title: "About | Userbase",
+  description:
+    "About the User Management System. We help organizations manage users, roles, and access with clarity, speed, and security.",
+}
+
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 dark:bg-black dark:text-zinc-50">
-      <main className="mx-auto w-full max-w-5xl px-6 py-16">
-        <Card className="border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <PageShell variant="light" maxWidth="default">
+      <Card className="border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
           <CardHeader>
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
               About
@@ -79,7 +83,6 @@ export default function AboutPage() {
             </p>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </PageShell>
   )
 }

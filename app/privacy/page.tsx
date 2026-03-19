@@ -1,9 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import PageShell from "../component/page-shell"
+
+export const revalidate = 604800 // ISR: revalidate weekly (same as terms)
+
+export const metadata = {
+  title: "Privacy Policy | Userbase",
+  description:
+    "Privacy policy for the User Management System. How we collect, use, and protect your information.",
+}
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 font-sans text-white">
-      <main className="mx-auto w-full max-w-4xl px-6 py-16">
+    <PageShell variant="dark" maxWidth="narrow">
         <Card className="border-white/10 bg-white/5 text-white">
           <CardHeader>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-300">
@@ -73,7 +81,6 @@ export default function PrivacyPage() {
             </Card>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </PageShell>
   )
 }
