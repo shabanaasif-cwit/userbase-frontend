@@ -1,13 +1,15 @@
 "use client";
 
-import { FC, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getNotificationsForUser, markNotificationsAsRead } from "@/lib/notifications-store";
 import { BellRing, UserRoundKey, CircleUserRound, LayoutDashboard, Images, Info, PhoneCall,LogIn, LogOut   } from 'lucide-react';
 
 interface HeaderProps {
   role: string;
   isAuthenticated: boolean;
+  userEmail?: string | null;
   onLogout: () => void;
 }
 
@@ -19,7 +21,7 @@ type NotificationItem = {
   isRead?: boolean;
 };
 
-const Header: FC<HeaderProps> = ({ role, isAuthenticated, onLogout }) => {
+const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout }) => {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -45,11 +47,20 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, onLogout }) => {
     router.push(path);
   };
 
+  useEffect(() => {
+    if (isAuthenticated && userEmail) {
+      setNotifications(getNotificationsForUser(userEmail, role));
+      setNotificationError("");
+    } else {
+      setNotifications([]);
+    }
+  }, [isAuthenticated, userEmail, role]);
+
   const navLinkClass =
     "hover:text-gray-400 hover:underline underline-offset-4 transition-all duration-200";
 
   const notificationCount = notifications.filter((item) => !item.isRead).length;
-  const viewAllPath = role === "admin" ? "/admin/notifications" : "/dashboard";
+  const viewAllPath = role === "admin" ? "/admin/notifications" : "/notifications";
   const displayCount = useMemo(() => {
     if (notificationCount <= 0) return "0";
     if (notificationCount > 9) return "9+";
@@ -57,16 +68,26 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, onLogout }) => {
   }, [notificationCount]);
 
   const handleOpenNotification = (item: NotificationItem) => {
+    if (userEmail) {
+      markNotificationsAsRead(userEmail, [item._id]);
+      setNotifications(getNotificationsForUser(userEmail, role));
+    }
     setActiveNotification(item);
-    setNotifications((prev) =>
-      prev.map((notice) =>
-        notice._id === item._id ? { ...notice, isRead: true } : notice
-      )
-    );
+  };
+
+  const handleReadAll = () => {
+    if (userEmail && notifications.length > 0) {
+      markNotificationsAsRead(
+        userEmail,
+        notifications.map((n) => n._id)
+      );
+      setNotifications(getNotificationsForUser(userEmail, role));
+    }
+    setIsNotificationsOpen(false);
   };
 
   return (
-    <header className="bg-gray-800 text-white p-4">
+    <header className="relative z-50 bg-gray-800 text-white p-4">
       <div className="flex items-center justify-between md:flex-row md:items-center md:justify-between">
         <div className="text-2xl font-bold">
           <Link href="/" className="flex items-center gap-3 text-white" onClick={handleMenuClose}>
@@ -201,18 +222,29 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, onLogout }) => {
                   </button>
 
                   {isNotificationsOpen && (
-                    <div className="absolute right-0 mt-3 w-80 rounded-xl border border-white/10 bg-slate-950 p-4 text-sm text-slate-200 shadow-xl">
-                      <div className="flex items-center justify-between">
+                    <div className="absolute right-0 z-[100] mt-3 w-80 rounded-xl border border-white/15 bg-[#0f172a] p-4 text-sm text-slate-200 shadow-2xl shadow-black/50 ring-1 ring-white/5">
+                      <div className="flex items-center justify-between gap-2">
                         <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
                           Notifications
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => setIsNotificationsOpen(false)}
-                          className="cursor-pointer text-xs text-slate-400 hover:text-white"
-                        >
-                          Close
-                        </button>
+                        <div className="flex items-center gap-3">
+                          {notifications.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={handleReadAll}
+                              className="cursor-pointer text-xs text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
+                            >
+                              Read all
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setIsNotificationsOpen(false)}
+                            className="cursor-pointer text-xs text-slate-400 hover:text-white"
+                          >
+                            Close
+                          </button>
+                        </div>
                       </div>
 
                       <div className="mt-3 space-y-3">
@@ -252,7 +284,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, onLogout }) => {
                         <button
                           type="button"
                           onClick={() => handleNavigate(viewAllPath)}
-                          className="text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
+                          className="cursor-pointer text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
                         >
                           View all
                         </button>
@@ -443,7 +475,28 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, onLogout }) => {
                       )}
                     </button>
                     {isNotificationsOpen && (
-                      <div className="mt-3 rounded-xl border border-white/10 bg-slate-950 p-4 text-xs text-slate-200">
+                      <div className="relative z-[100] mt-3 rounded-xl border border-white/15 bg-[#0f172a] p-4 text-xs text-slate-200 shadow-2xl shadow-black/50 ring-1 ring-white/5">
+                        <div className="flex items-center justify-between gap-2 pb-2">
+                          <span className="text-slate-400">Notifications</span>
+                          <div className="flex items-center gap-3">
+                            {notifications.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={handleReadAll}
+                                className="cursor-pointer text-xs text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
+                              >
+                                Read all
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setIsNotificationsOpen(false)}
+                              className="cursor-pointer text-xs text-slate-400 hover:text-white"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
                         {notificationError && (
                           <p className="text-rose-300">{notificationError}</p>
                         )}
