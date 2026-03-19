@@ -39,7 +39,7 @@ export default function PageShell({
     >
       <main
         className={cn(
-          "mx-auto w-full px-6 py-16",
+          "mx-auto w-full px-4 py-10 sm:px-6 sm:py-16",
           maxWidthStyles[maxWidth]
         )}
       >

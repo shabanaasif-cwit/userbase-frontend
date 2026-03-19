@@ -170,55 +170,69 @@ export default function AdminNotificationsPage() {
 
   return (
     <div className="min-h-full bg-zinc-950 font-sans text-white">
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-zinc-950 via-zinc-950/98 to-zinc-900" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(56,189,248,0.06),transparent)]" />
+
       <main className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
-        <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 px-6 py-10 sm:px-8 sm:py-12">
-          <div className="flex items-center gap-2 text-zinc-400">
-            <Bell className="h-4 w-4" />
-            <span className="text-xs font-medium uppercase tracking-widest">
-              Admin
-            </span>
+        <section className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-zinc-900/80 shadow-xl shadow-black/20 backdrop-blur-sm">
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-500/15 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl" />
+          <div className="relative flex items-start gap-5 px-6 py-10 sm:px-8 sm:py-12">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/25 to-sky-600/15 text-sky-400 shadow-lg shadow-sky-500/10 ring-1 ring-sky-500/20">
+              <Bell className="h-7 w-7" strokeWidth={1.75} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-sky-400">
+                Admin
+              </p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                Manage Notifications
+              </h1>
+              <p className="mt-2 max-w-lg text-sm text-zinc-400">
+                Create, edit, and delete notifications. Target all users, by role, or
+                specific users (frontend-only; data stored in localStorage until
+                backend is available).
+              </p>
+            </div>
           </div>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Manage Notifications
-          </h1>
-          <p className="mt-2 max-w-lg text-zinc-400">
-            Create, edit, and delete notifications. Target all users, by role, or
-            specific users (frontend-only; data stored in localStorage until
-            backend is available).
-          </p>
         </section>
 
-        <Card className="mt-10 border-white/10 bg-white/5">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <Card className="mt-10 overflow-hidden border-white/[0.08] bg-zinc-900/60 shadow-xl shadow-black/20 backdrop-blur-sm">
+          <div className="h-1 w-full bg-gradient-to-r from-sky-500 via-sky-400 to-indigo-400" />
+          <CardHeader className="flex flex-col gap-4 border-b border-white/[0.06] bg-white/[0.02] px-4 pb-4 pt-5 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 sm:px-8">
             <div>
-              <CardTitle className="text-white">Notifications</CardTitle>
-              <CardDescription className="text-zinc-400">
-                {notifications.length} notification(s)
+              <CardTitle className="text-lg font-semibold text-white">
+                Notifications
+              </CardTitle>
+              <CardDescription className="text-sm text-zinc-500">
+                {notifications.length} notification{notifications.length !== 1 ? "s" : ""}
               </CardDescription>
             </div>
             <Button
               onClick={openCreate}
-              className="bg-sky-600 text-white hover:bg-sky-500"
+              className="w-full shrink-0 sm:w-auto bg-gradient-to-r from-sky-600 to-sky-500 text-white shadow-lg shadow-sky-500/25 hover:from-sky-500 hover:to-sky-400"
             >
               <Plus className="mr-2 h-4 w-4" />
               Create notification
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             {notifications.length === 0 ? (
-              <p className="rounded-lg border border-white/10 bg-white/5 py-8 text-center text-zinc-400">
-                No notifications yet. Create one to get started.
-              </p>
+              <div className="rounded-xl border-2 border-dashed border-white/10 bg-white/[0.02] py-16 text-center">
+                <p className="text-sm font-medium text-zinc-400">
+                  No notifications yet. Create one to get started.
+                </p>
+              </div>
             ) : (
-              <div className="rounded-lg border border-white/10 overflow-hidden">
-                <Table>
+              <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
+                <Table className="min-w-[640px]">
                   <TableHeader>
-                    <TableRow className="border-white/10 hover:bg-white/5">
-                      <TableHead className="text-zinc-300">Title</TableHead>
-                      <TableHead className="text-zinc-300 max-w-[200px]">Message</TableHead>
-                      <TableHead className="text-zinc-300">Target</TableHead>
-                      <TableHead className="text-zinc-300">Created</TableHead>
-                      <TableHead className="text-zinc-300 text-right">
+                    <TableRow className="border-white/[0.06] bg-sky-500/10 hover:bg-sky-500/10">
+                      <TableHead className="font-semibold text-zinc-200">Title</TableHead>
+                      <TableHead className="max-w-[200px] font-semibold text-zinc-200">Message</TableHead>
+                      <TableHead className="font-semibold text-zinc-200">Target</TableHead>
+                      <TableHead className="font-semibold text-zinc-200">Created</TableHead>
+                      <TableHead className="text-right font-semibold text-zinc-200">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -227,7 +241,7 @@ export default function AdminNotificationsPage() {
                     {notifications.map((n) => (
                       <TableRow
                         key={n.id}
-                        className="border-white/10 hover:bg-white/5"
+                        className="border-white/[0.06] transition-colors hover:bg-sky-500/5"
                       >
                         <TableCell className="font-medium text-white">
                           {n.title}
@@ -238,7 +252,7 @@ export default function AdminNotificationsPage() {
                         <TableCell className="text-zinc-400">
                           {getTargetSummary(n)}
                         </TableCell>
-                        <TableCell className="text-zinc-500 text-sm">
+                        <TableCell className="text-sm text-zinc-500">
                           {formatDate(n.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
@@ -246,7 +260,7 @@ export default function AdminNotificationsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-zinc-300 hover:text-white hover:bg-white/10"
+                              className="text-sky-400 hover:bg-sky-500/15 hover:text-sky-300"
                               onClick={() => openEdit(n)}
                             >
                               <Pencil className="h-4 w-4" />
@@ -255,7 +269,7 @@ export default function AdminNotificationsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              className="text-red-400 hover:bg-red-500/15 hover:text-red-300"
                               onClick={() => openDelete(n.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -272,10 +286,10 @@ export default function AdminNotificationsPage() {
           </CardContent>
         </Card>
 
-        <p className="mt-10 text-center text-sm text-zinc-500">
+        <p className="mt-10 flex justify-center">
           <Link
             href="/admin/dashboard"
-            className="text-sky-400 hover:underline"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
           >
             ← Back to Admin Dashboard
           </Link>
@@ -284,9 +298,10 @@ export default function AdminNotificationsPage() {
 
       {/* Create dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="border-white/10 bg-zinc-900 text-white sm:max-w-md">
+        <DialogContent className="overflow-hidden border-sky-500/30 bg-zinc-900 text-white shadow-2xl shadow-sky-500/10 sm:max-w-md">
+          <div className="h-1 w-full bg-gradient-to-r from-sky-500 to-sky-400" />
           <DialogHeader>
-            <DialogTitle>Create notification</DialogTitle>
+            <DialogTitle className="text-white">Create notification</DialogTitle>
           </DialogHeader>
           <NotificationForm
             formTitle={formTitle}
@@ -304,13 +319,13 @@ export default function AdminNotificationsPage() {
           <DialogFooter showCloseButton className="gap-2 sm:gap-0">
             <Button
               variant="outline"
-              className="border-white/20 text-zinc-300"
+              className="border-white/20 text-zinc-300 hover:bg-white/10"
               onClick={() => setCreateOpen(false)}
             >
               Cancel
             </Button>
             <Button
-              className="bg-sky-600 hover:bg-sky-500 text-white"
+              className="bg-gradient-to-r from-sky-600 to-sky-500 text-white hover:from-sky-500 hover:to-sky-400"
               onClick={handleCreate}
               disabled={!formTitle.trim()}
             >
@@ -322,9 +337,10 @@ export default function AdminNotificationsPage() {
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="border-white/10 bg-zinc-900 text-white sm:max-w-md">
+        <DialogContent className="overflow-hidden border-sky-500/30 bg-zinc-900 text-white shadow-2xl shadow-sky-500/10 sm:max-w-md">
+          <div className="h-1 w-full bg-gradient-to-r from-sky-500 to-sky-400" />
           <DialogHeader>
-            <DialogTitle>Edit notification</DialogTitle>
+            <DialogTitle className="text-white">Edit notification</DialogTitle>
           </DialogHeader>
           <NotificationForm
             formTitle={formTitle}
@@ -342,13 +358,13 @@ export default function AdminNotificationsPage() {
           <DialogFooter showCloseButton className="gap-2 sm:gap-0">
             <Button
               variant="outline"
-              className="border-white/20 text-zinc-300"
+              className="border-white/20 text-zinc-300 hover:bg-white/10"
               onClick={() => setEditOpen(false)}
             >
               Cancel
             </Button>
             <Button
-              className="bg-sky-600 hover:bg-sky-500 text-white"
+              className="bg-gradient-to-r from-sky-600 to-sky-500 text-white hover:from-sky-500 hover:to-sky-400"
               onClick={handleUpdate}
               disabled={!formTitle.trim()}
             >
@@ -360,9 +376,10 @@ export default function AdminNotificationsPage() {
 
       {/* Delete confirm dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="border-white/10 bg-zinc-900 text-white sm:max-w-sm">
+        <DialogContent className="overflow-hidden border-red-500/30 bg-zinc-900 text-white shadow-2xl shadow-red-500/10 sm:max-w-sm">
+          <div className="h-1 w-full bg-gradient-to-r from-red-500 to-red-400" />
           <DialogHeader>
-            <DialogTitle>Delete notification</DialogTitle>
+            <DialogTitle className="text-white">Delete notification</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-zinc-400">
             Are you sure you want to delete
@@ -371,19 +388,19 @@ export default function AdminNotificationsPage() {
             ) : (
               " this notification"
             )}{" "}
-? This cannot be undone.
+            ? This cannot be undone.
           </p>
           <DialogFooter showCloseButton className="gap-2 sm:gap-0">
             <Button
               variant="outline"
-              className="border-white/20 text-zinc-300"
+              className="border-white/20 text-zinc-300 hover:bg-white/10"
               onClick={() => setDeleteOpen(false)}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              className="bg-red-600 hover:bg-red-500 text-white"
+              className="bg-gradient-to-r from-red-600 to-red-500 text-white hover:from-red-500 hover:to-red-400"
               onClick={handleDelete}
             >
               Delete
@@ -423,7 +440,7 @@ function NotificationForm({
   return (
     <div className="grid gap-4 py-2">
       <div className="grid gap-2">
-        <Label htmlFor="notif-title" className="text-zinc-300">
+        <Label htmlFor="notif-title" className="text-zinc-200">
           Title <span className="text-red-400" aria-hidden="true">*</span>
         </Label>
         <Input
@@ -433,11 +450,11 @@ function NotificationForm({
           placeholder="Notification title"
           required
           aria-required="true"
-          className="h-9 border-white/20 bg-zinc-800 text-white placeholder:text-zinc-500"
+          className="h-9 border-white/20 bg-zinc-800 text-white placeholder:text-zinc-500 focus-visible:ring-sky-400"
         />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="notif-message" className="text-zinc-300">
+        <Label htmlFor="notif-message" className="text-zinc-200">
           Message
         </Label>
         <Textarea
@@ -446,20 +463,20 @@ function NotificationForm({
           onChange={(e) => setFormMessage(e.target.value)}
           placeholder="Notification message"
           rows={3}
-          className="border-white/20 bg-zinc-800 text-white placeholder:text-zinc-500"
+          className="border-white/20 bg-zinc-800 text-white placeholder:text-zinc-500 focus-visible:ring-sky-400"
         />
       </div>
       <div className="grid gap-2">
-        <Label className="text-zinc-300">Target</Label>
+        <Label className="text-zinc-200">Target</Label>
         <div className="flex flex-wrap gap-3">
           {TARGET_OPTIONS.map((opt) => (
             <label
               key={opt.value}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
+                "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all",
                 formTargetType === opt.value
-                  ? "border-sky-500/50 bg-sky-500/10 text-sky-200"
-                  : "border-white/20 bg-zinc-800/50 text-zinc-300 hover:bg-zinc-800"
+                  ? "border-sky-400/60 bg-sky-500/20 text-sky-100 shadow-inner ring-1 ring-sky-400/30"
+                  : "border-white/15 bg-zinc-800/80 text-zinc-400 hover:border-white/25 hover:bg-zinc-800 hover:text-zinc-300"
               )}
             >
               <input
@@ -477,14 +494,14 @@ function NotificationForm({
       </div>
       {formTargetType === "role" && (
         <div className="grid gap-2">
-          <Label htmlFor="notif-role" className="text-zinc-300">
+          <Label htmlFor="notif-role" className="text-zinc-200">
             Role
           </Label>
           <select
             id="notif-role"
             value={formTargetRole}
             onChange={(e) => setFormTargetRole(e.target.value)}
-            className="h-9 w-full rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="h-9 w-full rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
           >
             <option value={ROLES.USER}>{ROLES.USER}</option>
             <option value={ROLES.ADMIN}>{ROLES.ADMIN}</option>
@@ -493,22 +510,22 @@ function NotificationForm({
       )}
       {formTargetType === "users" && (
         <div className="grid gap-2">
-          <Label className="text-zinc-300">Select users</Label>
-          <div className="max-h-40 overflow-y-auto rounded-lg border border-white/20 bg-zinc-800/50 p-2 space-y-2">
+          <Label className="text-zinc-200">Select users</Label>
+          <div className="max-h-40 space-y-2 overflow-y-auto rounded-lg border border-white/20 bg-zinc-800/50 p-2">
             {managedUsers.length === 0 ? (
-              <p className="text-sm text-zinc-500">No users in system yet.</p>
+              <p className="py-2 text-sm text-zinc-500">No users in system yet.</p>
             ) : (
               managedUsers.map((u) => (
                 <label
                   key={u.email}
-                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-zinc-300 hover:bg-white/5"
+                  className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-sky-500/10 hover:text-zinc-100"
                 >
                   <Checkbox
                     checked={formTargetUserIds.includes(u.email)}
                     onCheckedChange={() => toggleUserInForm(u.email)}
                   />
                   <span className="truncate">{u.name}</span>
-                  <span className="text-zinc-500 truncate">({u.email})</span>
+                  <span className="truncate text-zinc-500">({u.email})</span>
                 </label>
               ))
             )}

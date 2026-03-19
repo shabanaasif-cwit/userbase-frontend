@@ -34,7 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, UserMinus, UserCheck, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, UserMinus, UserCheck, Search, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
@@ -121,31 +121,46 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-full bg-zinc-950 font-sans text-white">
-      <main className="mx-auto w-full max-w-6xl px-6 py-20">
-        <section className="rounded-[32px] border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 px-8 py-14">
-          <p className="text-xs uppercase tracking-[0.3em] text-zinc-400">
-            Admin
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">
-            User management
-          </h1>
-          <p className="mt-4 text-lg text-zinc-300">
-            View and manage user accounts: search, filter, edit roles and status.
-          </p>
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-zinc-950 via-zinc-950/98 to-zinc-900" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.06),transparent)]" />
+
+      <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <section className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-zinc-900/80 shadow-xl shadow-black/20 backdrop-blur-sm">
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/15 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
+          <div className="relative flex items-start gap-5 px-6 py-10 sm:px-8 sm:py-12">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/25 to-emerald-600/15 text-emerald-400 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/20">
+              <Users className="h-7 w-7" strokeWidth={1.75} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-400">
+                Admin
+              </p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                User Management
+              </h1>
+              <p className="mt-2 max-w-lg text-sm text-zinc-400">
+                View and manage user accounts: search, filter, edit roles and status.
+              </p>
+            </div>
+          </div>
         </section>
 
-        <Card className="mt-10 border-white/10 bg-white/5 text-white">
-          <CardHeader>
-            <CardTitle>Users</CardTitle>
-            <CardDescription className="text-slate-300">
-              {filtered.length} user(s) · Search and filter below.
+        <Card className="mt-10 overflow-hidden border-white/[0.08] bg-zinc-900/60 shadow-xl shadow-black/20 backdrop-blur-sm">
+          <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-sky-400" />
+          <CardHeader className="border-b border-white/[0.06] bg-white/[0.02] px-6 py-5 sm:px-8">
+            <CardTitle className="text-lg font-semibold text-white">
+              Users
+            </CardTitle>
+            <CardDescription className="text-sm text-zinc-500">
+              {filtered.length} user{filtered.length !== 1 ? "s" : ""} · Search and filter below.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-4 sm:p-6">
             {/* Search and filters */}
             <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative min-w-0 flex-1 basis-full sm:basis-auto">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
                 <Input
                   placeholder="Search by name or email..."
                   value={search}
@@ -153,7 +168,7 @@ export default function AdminUsersPage() {
                     setSearch(e.target.value);
                     setPage(1);
                   }}
-                  className="pl-8 bg-white/5 border-white/20 text-white placeholder:text-zinc-500"
+                  className="pl-9 border-white/20 bg-zinc-800/80 text-white placeholder:text-zinc-500 focus-visible:ring-emerald-400"
                 />
               </div>
               <select
@@ -162,7 +177,7 @@ export default function AdminUsersPage() {
                   setRoleFilter(e.target.value);
                   setPage(1);
                 }}
-                className="h-8 rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="h-9 rounded-lg border border-white/20 bg-zinc-800/80 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
               >
                 <option value="all">All roles</option>
                 <option value={ROLES.USER}>User</option>
@@ -174,7 +189,7 @@ export default function AdminUsersPage() {
                   setStatusFilter(e.target.value);
                   setPage(1);
                 }}
-                className="h-8 rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="h-9 rounded-lg border border-white/20 bg-zinc-800/80 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
               >
                 <option value="all">All statuses</option>
                 <option value="active">Active</option>
@@ -182,25 +197,25 @@ export default function AdminUsersPage() {
               </select>
             </div>
 
-            <div className="rounded-lg border border-white/10 overflow-hidden">
-              <Table>
+            <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
+              <Table className="min-w-[600px]">
                 <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-white/5">
-                    <TableHead className="text-zinc-300">Username</TableHead>
-                    <TableHead className="text-zinc-300">Email</TableHead>
-                    <TableHead className="text-zinc-300">Role</TableHead>
-                    <TableHead className="text-zinc-300">Status</TableHead>
-                    <TableHead className="text-zinc-300 text-right">
+                  <TableRow className="border-white/[0.06] bg-emerald-500/10 hover:bg-emerald-500/10">
+                    <TableHead className="font-semibold text-zinc-200">Username</TableHead>
+                    <TableHead className="font-semibold text-zinc-200">Email</TableHead>
+                    <TableHead className="font-semibold text-zinc-200">Role</TableHead>
+                    <TableHead className="font-semibold text-zinc-200">Status</TableHead>
+                    <TableHead className="text-right font-semibold text-zinc-200">
                       Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginated.length === 0 ? (
-                    <TableRow className="border-white/10">
+                    <TableRow className="border-white/[0.06]">
                       <TableCell
                         colSpan={5}
-                        className="text-center py-8 text-zinc-400"
+                        className="py-12 text-center text-zinc-500"
                       >
                         No users match your filters.
                       </TableCell>
@@ -209,9 +224,9 @@ export default function AdminUsersPage() {
                     paginated.map((user) => (
                       <TableRow
                         key={user.email}
-                        className="border-white/10 hover:bg-white/5"
+                        className="border-white/[0.06] transition-colors hover:bg-emerald-500/5"
                       >
-                        <TableCell className="text-white font-medium">
+                        <TableCell className="font-medium text-white">
                           {user.name || user.email}
                         </TableCell>
                         <TableCell className="text-zinc-300">
@@ -220,10 +235,10 @@ export default function AdminUsersPage() {
                         <TableCell>
                           <span
                             className={cn(
-                              "rounded-full px-2 py-0.5 text-xs font-medium",
+                              "rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",
                               user.role === ROLES.ADMIN
-                                ? "bg-sky-500/20 text-sky-300"
-                                : "bg-zinc-600/50 text-zinc-300"
+                                ? "bg-sky-500/20 text-sky-300 ring-sky-500/30"
+                                : "bg-zinc-600/50 text-zinc-300 ring-white/10"
                             )}
                           >
                             {user.role}
@@ -232,10 +247,10 @@ export default function AdminUsersPage() {
                         <TableCell>
                           <span
                             className={cn(
-                              "rounded-full px-2 py-0.5 text-xs font-medium",
+                              "rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset",
                               user.status === "active"
-                                ? "bg-emerald-500/20 text-emerald-300"
-                                : "bg-red-500/20 text-red-300"
+                                ? "bg-emerald-500/20 text-emerald-300 ring-emerald-500/30"
+                                : "bg-red-500/20 text-red-300 ring-red-500/30"
                             )}
                           >
                             {user.status}
@@ -246,7 +261,7 @@ export default function AdminUsersPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-zinc-300 hover:text-white hover:bg-white/10"
+                              className="text-sky-400 hover:bg-sky-500/15 hover:text-sky-300"
                               onClick={() => openEdit(user)}
                             >
                               <Pencil className="h-4 w-4" />
@@ -257,8 +272,8 @@ export default function AdminUsersPage() {
                               size="sm"
                               className={cn(
                                 user.status === "active"
-                                  ? "text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-                                  : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                                  ? "text-amber-400 hover:bg-amber-500/15 hover:text-amber-300"
+                                  : "text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300"
                               )}
                               onClick={() => handleToggleStatus(user)}
                             >
@@ -293,7 +308,7 @@ export default function AdminUsersPage() {
                     setRowsPerPage(Number(e.target.value));
                     setPage(1);
                   }}
-                  className="h-8 rounded border border-white/20 bg-zinc-800 px-2 text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="h-9 rounded-lg border border-white/20 bg-zinc-800/80 px-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
                 >
                   {ROWS_PER_PAGE_OPTIONS.map((n) => (
                     <option key={n} value={n}>
@@ -311,7 +326,7 @@ export default function AdminUsersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-white/20 text-zinc-300 hover:bg-white/10 hover:text-white"
+                  className="border-white/20 text-zinc-300 hover:bg-emerald-500/15 hover:border-emerald-500/40 hover:text-emerald-200"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
@@ -323,7 +338,7 @@ export default function AdminUsersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-white/20 text-zinc-300 hover:bg-white/10 hover:text-white"
+                  className="border-white/20 text-zinc-300 hover:bg-emerald-500/15 hover:border-emerald-500/40 hover:text-emerald-200"
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
@@ -334,10 +349,10 @@ export default function AdminUsersPage() {
           </CardContent>
         </Card>
 
-        <p className="mt-10 text-center text-sm text-slate-500">
+        <p className="mt-10 flex justify-center">
           <Link
             href="/admin/dashboard"
-            className="text-sky-400 hover:underline"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
           >
             ← Back to Admin Dashboard
           </Link>
@@ -346,9 +361,10 @@ export default function AdminUsersPage() {
 
       {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="border-white/10 bg-zinc-900 text-white sm:max-w-sm">
+        <DialogContent className="overflow-hidden border-emerald-500/30 bg-zinc-900 text-white shadow-2xl shadow-emerald-500/10 sm:max-w-sm">
+          <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
           <DialogHeader>
-            <DialogTitle>Edit user</DialogTitle>
+            <DialogTitle className="text-white">Edit user</DialogTitle>
           </DialogHeader>
           {editingUser && (
             <div className="grid gap-4 py-2">
@@ -356,14 +372,14 @@ export default function AdminUsersPage() {
                 {editingUser.name || editingUser.email} · {editingUser.email}
               </p>
               <div className="grid gap-2">
-                <Label htmlFor="edit-role" className="text-zinc-300">
+                <Label htmlFor="edit-role" className="text-zinc-200">
                   Role
                 </Label>
                 <select
                   id="edit-role"
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value)}
-                  className="h-9 w-full rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="h-9 w-full rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
                 >
                   {ROLE_OPTIONS.map((r) => (
                     <option key={r} value={r}>
@@ -373,7 +389,7 @@ export default function AdminUsersPage() {
                 </select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-status" className="text-zinc-300">
+                <Label htmlFor="edit-status" className="text-zinc-200">
                   Account status
                 </Label>
                 <select
@@ -382,7 +398,7 @@ export default function AdminUsersPage() {
                   onChange={(e) =>
                     setEditStatus(e.target.value as "active" | "deactivated")
                   }
-                  className="h-9 w-full rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="h-9 w-full rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>
@@ -396,13 +412,13 @@ export default function AdminUsersPage() {
           <DialogFooter showCloseButton className="gap-2 sm:gap-0">
             <Button
               variant="outline"
-              className="border-white/20 text-zinc-300"
+              className="border-white/20 text-zinc-300 hover:bg-white/10"
               onClick={closeEdit}
             >
               Cancel
             </Button>
             <Button
-              className="bg-sky-600 hover:bg-sky-500 text-white"
+              className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-400"
               onClick={handleSaveEdit}
             >
               Save

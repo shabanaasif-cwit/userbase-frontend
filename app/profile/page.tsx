@@ -71,7 +71,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(94,234,212,0.18),_transparent_55%),radial-gradient(circle_at_20%_20%,_rgba(56,189,248,0.16),_transparent_45%),linear-gradient(160deg,_#020617,_#0f172a_45%,_#020617)] font-sans text-white">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-16">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-12 sm:px-6 sm:py-16">
         <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-10 shadow-[0_35px_120px_-70px_rgba(56,189,248,0.8)]">
           <div className="pointer-events-none absolute -top-20 right-10 h-56 w-56 rounded-full bg-cyan-400/20 blur-[90px]" />
           <div className="pointer-events-none absolute -bottom-24 left-4 h-56 w-56 rounded-full bg-emerald-400/20 blur-[90px]" />

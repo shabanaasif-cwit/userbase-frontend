@@ -38,7 +38,7 @@ const quickLinks = [
 export default function WelcomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-zinc-950 to-slate-900 font-sans text-white">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 py-16 lg:py-24">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-4 py-12 sm:px-6 sm:py-16 lg:py-24">
         <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-zinc-950 px-8 py-14 shadow-2xl shadow-black/40">
           <div className="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 right-0 h-72 w-72 rounded-full bg-fuchsia-500/15 blur-3xl" />

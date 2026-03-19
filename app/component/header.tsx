@@ -222,7 +222,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   </button>
 
                   {isNotificationsOpen && (
-                    <div className="absolute right-0 z-[100] mt-3 w-80 rounded-xl border border-white/15 bg-[#0f172a] p-4 text-sm text-slate-200 shadow-2xl shadow-black/50 ring-1 ring-white/5">
+                    <div className="absolute right-0 z-[100] mt-3 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-white/15 bg-[#0f172a] p-4 text-sm text-slate-200 shadow-2xl shadow-black/50 ring-1 ring-white/5">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
                           Notifications
