@@ -142,7 +142,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 font-sans text-white">
-      <main className="mx-auto w-full max-w-4xl px-6 py-16">
+      <main className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="grid gap-8 lg:grid-cols-2">
           <Card className="border-white/10 bg-white/5 text-white">
             <CardHeader>
@@ -318,7 +318,7 @@ export default function SignupPage() {
 
       {/* Toast-style Notification for Success */}
       {isToastVisible && (
-        <div className="fixed top-4 right-4 z-[100] bg-green-500 text-white p-4 rounded-md shadow-lg w-96">
+        <div className="fixed right-4 top-4 z-[100] w-[calc(100%-2rem)] max-w-sm rounded-md bg-green-500 p-4 text-white shadow-lg">
           <div className="flex justify-between items-center">
             <p className="text-lg">{successMessage}</p>
             <button

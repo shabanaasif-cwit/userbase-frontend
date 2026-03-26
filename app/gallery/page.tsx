@@ -19,7 +19,7 @@ const galleryItems = [
     title: "User Profiles",
     description: "Centralize employee and member profiles.",
     image:
-      "https://images.unsplash.com/photo-1551431009-a22ee0f7550d?w=600&h=400&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1573164713988-8665fc963095?w=600&h=400&fit=crop&q=80",
   },
   {
     title: "Audit Insights",
@@ -49,7 +49,7 @@ const galleryItems = [
     title: "Access Control",
     description: "Control who can see and do what across the platform.",
     image:
-      "https://images.unsplash.com/photo-1633265486064-086b457460eb?w=600&h=400&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=400&fit=crop&q=80",
   },
   {
     title: "Activity Logs",
@@ -67,13 +67,13 @@ const galleryItems = [
     title: "Approval Workflows",
     description: "Route requests and approvals through a single hub.",
     image:
-      "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=600&h=400&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=400&fit=crop&q=80",
   },
   {
     title: "Dashboard Overview",
     description: "See users, roles, and activity at a glance.",
     image:
-      "https://images.unsplash.com/photo-1553877522-55169eec6adf?w=600&h=400&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&q=80",
   },
 ]
 

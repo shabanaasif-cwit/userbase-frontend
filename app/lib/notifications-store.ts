@@ -112,6 +112,31 @@ export function deleteNotification(id: string): boolean {
   return true;
 }
 
+/**
+ * Creates a reminder notification by cloning an existing one
+ * and pushing it to the top with a new ID/timestamp.
+ */
+export function sendReminder(id: string): StoredNotification | null {
+  const list = loadNotifications();
+  const original = list.find((n) => n.id === id);
+  if (!original) return null;
+
+  const reminder: StoredNotification = {
+    ...original,
+    id: generateId(),
+    title: original.title.startsWith("[Reminder] ")
+      ? original.title
+      : `[Reminder] ${original.title}`,
+    targetUserIds: original.targetUserIds ? [...original.targetUserIds] : undefined,
+    createdAt: new Date().toISOString(),
+    updatedAt: undefined,
+  };
+
+  list.unshift(reminder);
+  saveNotifications(list);
+  return reminder;
+}
+
 export function getTargetSummary(notification: StoredNotification): string {
   switch (notification.targetType) {
     case "all":

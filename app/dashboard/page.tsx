@@ -111,13 +111,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-full bg-zinc-950 font-sans text-white">
       <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-20">
-        <Alert className="mb-6 border-white/10 bg-white/5 text-white">
-          <AlertTitle>System status</AlertTitle>
-          <AlertDescription>
-            All services operational. Scheduled maintenance on Saturday.
-          </AlertDescription>
-        </Alert>
-
         {notificationError && (
           <Alert className="mb-6 border-amber-500/30 bg-amber-500/10 text-amber-100">
             <AlertTitle>Notifications</AlertTitle>

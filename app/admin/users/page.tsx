@@ -205,9 +205,7 @@ export default function AdminUsersPage() {
                     <TableHead className="font-semibold text-zinc-200">Email</TableHead>
                     <TableHead className="font-semibold text-zinc-200">Role</TableHead>
                     <TableHead className="font-semibold text-zinc-200">Status</TableHead>
-                    <TableHead className="text-right font-semibold text-zinc-200">
-                      Actions
-                    </TableHead>
+                    <TableHead className="text-right font-semibold text-zinc-200">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -261,7 +259,7 @@ export default function AdminUsersPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-sky-400 hover:bg-sky-500/15 hover:text-sky-300"
+                              className="cursor-pointer text-sky-400 hover:bg-sky-500/15 hover:text-sky-300"
                               onClick={() => openEdit(user)}
                             >
                               <Pencil className="h-4 w-4" />
@@ -272,8 +270,8 @@ export default function AdminUsersPage() {
                               size="sm"
                               className={cn(
                                 user.status === "active"
-                                  ? "text-amber-400 hover:bg-amber-500/15 hover:text-amber-300"
-                                  : "text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300"
+                                  ? "cursor-pointer text-amber-400 hover:bg-amber-500/15 hover:text-amber-300"
+                                  : "cursor-pointer text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300"
                               )}
                               onClick={() => handleToggleStatus(user)}
                             >
@@ -412,13 +410,13 @@ export default function AdminUsersPage() {
           <DialogFooter showCloseButton className="gap-2 sm:gap-0">
             <Button
               variant="outline"
-              className="border-white/20 text-zinc-300 hover:bg-white/10"
+              className="cursor-pointer border-white/20 text-zinc-300 hover:bg-white/10"
               onClick={closeEdit}
             >
               Cancel
             </Button>
             <Button
-              className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-400"
+              className="cursor-pointer bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-400"
               onClick={handleSaveEdit}
             >
               Save
