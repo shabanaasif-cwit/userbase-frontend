@@ -83,7 +83,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 font-sans text-white">
-      <main className="mx-auto flex w-full max-w-6xl items-center justify-center px-6 py-16 lg:py-24">
+      <main className="mx-auto flex w-full max-w-6xl items-center justify-center px-4 py-12 sm:px-6 sm:py-16 lg:py-24">
         <div className="grid w-full gap-8 lg:grid-cols-2">
           <Card className="border-white/10 bg-white/5 text-white">
             <CardHeader>

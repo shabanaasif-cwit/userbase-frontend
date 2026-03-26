@@ -133,7 +133,7 @@ export default function NotificationsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 border-white/10 bg-white/5 font-medium text-zinc-300 shadow-sm transition hover:border-sky-500/40 hover:bg-sky-500/15 hover:text-sky-200"
+                className="cursor-pointer shrink-0 border-white/10 bg-white/5 font-medium text-zinc-300 shadow-sm transition hover:border-sky-500/40 hover:bg-sky-500/15 hover:text-sky-200"
                 onClick={handleReadAll}
               >
                 <CheckCheck className="mr-2 h-4 w-4" />
@@ -175,7 +175,7 @@ export default function NotificationsPage() {
                       type="button"
                       onClick={() => handleOpenNotification(item)}
                       className={`
-                        group relative flex w-full items-start gap-4 rounded-xl border px-4 py-4 text-left transition-all duration-200
+                        group relative flex w-full cursor-pointer items-start gap-4 rounded-xl border px-4 py-4 text-left transition-all duration-200
                         sm:px-5
                         ${
                           item.isRead
@@ -256,7 +256,7 @@ export default function NotificationsPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="shrink-0 rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white"
+                className="shrink-0 cursor-pointer rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white"
                 onClick={() => setActiveNotification(null)}
                 aria-label="Close"
               >

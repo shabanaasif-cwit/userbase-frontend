@@ -7,6 +7,7 @@ import {
   addNotification,
   updateNotification,
   deleteNotification,
+  sendReminder,
   getTargetSummary,
   type StoredNotification,
   type NotificationTargetType,
@@ -44,6 +45,7 @@ import {
   Plus,
   Pencil,
   Trash2,
+  BellRing,
   Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -160,6 +162,11 @@ export default function AdminNotificationsPage() {
     }
   };
 
+  const handleReminder = (id: string) => {
+    sendReminder(id);
+    load();
+  };
+
   const toggleUserInForm = (email: string) => {
     setFormTargetUserIds((prev) =>
       prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email]
@@ -210,7 +217,7 @@ export default function AdminNotificationsPage() {
             </div>
             <Button
               onClick={openCreate}
-              className="w-full shrink-0 sm:w-auto bg-gradient-to-r from-sky-600 to-sky-500 text-white shadow-lg shadow-sky-500/25 hover:from-sky-500 hover:to-sky-400"
+              className="w-full shrink-0 cursor-pointer sm:w-auto bg-gradient-to-r from-sky-600 to-sky-500 text-white shadow-lg shadow-sky-500/25 hover:from-sky-500 hover:to-sky-400"
             >
               <Plus className="mr-2 h-4 w-4" />
               Create notification
@@ -260,7 +267,7 @@ export default function AdminNotificationsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-sky-400 hover:bg-sky-500/15 hover:text-sky-300"
+                              className="cursor-pointer text-sky-400 hover:bg-sky-500/15 hover:text-sky-300"
                               onClick={() => openEdit(n)}
                             >
                               <Pencil className="h-4 w-4" />
@@ -269,7 +276,16 @@ export default function AdminNotificationsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-red-400 hover:bg-red-500/15 hover:text-red-300"
+                              className="cursor-pointer text-amber-400 hover:bg-amber-500/15 hover:text-amber-300"
+                              onClick={() => handleReminder(n.id)}
+                            >
+                              <BellRing className="h-4 w-4" />
+                              <span className="sr-only">Send reminder</span>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="cursor-pointer text-red-400 hover:bg-red-500/15 hover:text-red-300"
                               onClick={() => openDelete(n.id)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -302,7 +318,7 @@ export default function AdminNotificationsPage() {
           <div className="h-1 w-full bg-gradient-to-r from-sky-500 to-sky-400" />
           <DialogHeader>
             <DialogTitle className="text-white">Create notification</DialogTitle>
-          </DialogHeader>
+          </DialogHeader>image.png i want 
           <NotificationForm
             formTitle={formTitle}
             setFormTitle={setFormTitle}
@@ -325,7 +341,7 @@ export default function AdminNotificationsPage() {
               Cancel
             </Button>
             <Button
-              className="bg-gradient-to-r from-sky-600 to-sky-500 text-white hover:from-sky-500 hover:to-sky-400"
+              className="cursor-pointer bg-gradient-to-r from-sky-600 to-sky-500 text-white hover:from-sky-500 hover:to-sky-400"
               onClick={handleCreate}
               disabled={!formTitle.trim()}
             >

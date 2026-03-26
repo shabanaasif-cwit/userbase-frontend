@@ -31,6 +31,23 @@ function getInitials(name?: string | null, email?: string) {
   return "UM";
 }
 
+function getDisplayName(name?: string | null, email?: string) {
+  const toTitleCase = (value: string) =>
+    value
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+
+  if (name?.trim()) return toTitleCase(name);
+  if (email?.trim()) {
+    const localPart = email.split("@")[0]?.trim();
+    return localPart ? toTitleCase(localPart.replace(/[._-]+/g, " ")) : "User";
+  }
+  return "User";
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isAuthenticated, isReady, role } = useAuth();
@@ -67,6 +84,7 @@ export default function ProfilePage() {
   }
 
   const initials = getInitials(profile?.name, profile?.email);
+  const displayName = getDisplayName(profile?.name, profile?.email);
   const viewAllPath = admin ? "/admin/notifications" : "/dashboard";
 
   return (
@@ -86,7 +104,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <CardTitle className="text-3xl">
-                    {profile?.name?.trim() || "Profile"}
+                    {displayName}
                   </CardTitle>
                   <p className="mt-1 text-sm text-slate-300">
                     {profile
@@ -185,7 +203,7 @@ export default function ProfilePage() {
                           );
                         }
                       }}
-                      className="text-xs text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
+                      className="text-xs cursor-pointer text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
                     >
                       Read all
                     </button>
@@ -284,7 +302,7 @@ export default function ProfilePage() {
                       Identity
                     </p>
                     <p className="mt-2 text-lg font-semibold text-white">
-                      {profile.name || "—"}
+                      {displayName}
                     </p>
                     <p className="text-sm text-slate-300">{profile.email}</p>
                     <p className="mt-2 text-sm text-slate-400">
@@ -345,7 +363,7 @@ export default function ProfilePage() {
                     }
                     setActiveNotification(null);
                   }}
-                  className="cursor-pointer rounded-full border border-white/10 px-3 py-1 text-xs text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
+                  className="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-full border border-sky-400/20 px-3 py-1 text-xs font-medium leading-none text-sky-300 transition hover:border-sky-300/40 hover:text-sky-200"
                 >
                   Read all
                 </button>

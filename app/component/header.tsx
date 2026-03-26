@@ -41,6 +41,11 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
     setIsMenuOpen(false);
   };
 
+  const handleHeaderItemClick = () => {
+    setIsNotificationsOpen(false);
+    setIsMenuOpen(false);
+  };
+
   const handleNavigate = (path: string) => {
     setIsNotificationsOpen(false);
     setIsMenuOpen(false);
@@ -57,7 +62,9 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
   }, [isAuthenticated, userEmail, role]);
 
   const navLinkClass =
-    "hover:text-gray-400 hover:underline underline-offset-4 transition-all duration-200";
+    "inline-flex items-center justify-center transition-all duration-200 hover:scale-110 hover:text-gray-400 hover:underline underline-offset-4";
+  const mobileNavItemClass =
+    "inline-flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white transition hover:border-white/20 hover:bg-white/10";
 
   const notificationCount = notifications.filter((item) => !item.isRead).length;
   const viewAllPath = role === "admin" ? "/admin/notifications" : "/notifications";
@@ -90,7 +97,11 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
     <header className="relative z-50 bg-gray-800 text-white p-4">
       <div className="flex items-center justify-between md:flex-row md:items-center md:justify-between">
         <div className="text-2xl font-bold">
-          <Link href="/" className="flex items-center gap-3 text-white" onClick={handleMenuClose}>
+          <Link
+            href="/"
+            className="flex items-center gap-3 text-white"
+            onClick={handleHeaderItemClick}
+          >
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
               <svg
                 viewBox="0 0 24 24"
@@ -144,6 +155,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   <Link
                     href="/profile"
                     className={navLinkClass}
+                    onClick={handleHeaderItemClick}
                     aria-label="Profile"
                     title="Profile"
                   >
@@ -155,6 +167,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                     <Link
                       href="/admin/dashboard"
                       className={navLinkClass}
+                      onClick={handleHeaderItemClick}
                       aria-label="Admin dashboard"
                       title="Admin dashboard"
                     >
@@ -167,6 +180,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                     <Link
                       href="/dashboard"
                       className={navLinkClass}
+                      onClick={handleHeaderItemClick}
                       aria-label="Dashboard"
                       title="Dashboard"
                     >
@@ -179,6 +193,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   <Link
                     href="/gallery"
                     className={navLinkClass}
+                    onClick={handleHeaderItemClick}
                     aria-label="Gallery"
                     title="Gallery"
                   >
@@ -189,6 +204,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   <Link
                     href="/contact"
                     className={navLinkClass}
+                    onClick={handleHeaderItemClick}
                     aria-label="Contact"
                     title="Contact"
                   >
@@ -199,6 +215,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   <Link
                     href="/about"
                     className={navLinkClass}
+                    onClick={handleHeaderItemClick}
                     aria-label="About"
                     title="About"
                   >
@@ -208,7 +225,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                 <li className="relative">
                   <button
                     type="button"
-                    className="relative inline-flex items-center gap-2"
+                    className="relative inline-flex items-center gap-2 transition-transform duration-200 hover:scale-110"
                     onClick={() => setIsNotificationsOpen((prev) => !prev)}
                     aria-label="Notifications"
                     title="Notifications"
@@ -292,7 +309,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                           <button
                             type="button"
                             onClick={() => handleNavigate("/admin/notifications")}
-                            className="text-slate-300 hover:text-white hover:underline underline-offset-4"
+                            className="cursor-pointer text-slate-300 hover:text-white hover:underline underline-offset-4"
                           >
                             Manage
                           </button>
@@ -308,6 +325,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   <Link
                     href="/dashboard"
                     className={navLinkClass}
+                    onClick={handleHeaderItemClick}
                     aria-label="Dashboard"
                     title="Dashboard"
                   >
@@ -319,6 +337,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   <Link
                     href="/gallery"
                     className={navLinkClass}
+                    onClick={handleHeaderItemClick}
                     aria-label="Gallery"
                     title="Gallery"
                   >
@@ -329,6 +348,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   <Link
                     href="/contact"
                     className={navLinkClass}
+                    onClick={handleHeaderItemClick}
                     aria-label="Contact"
                     title="Contact"
                   >
@@ -339,6 +359,7 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   <Link
                     href="/about"
                     className={navLinkClass}
+                    onClick={handleHeaderItemClick}
                     aria-label="About"
                     title="About"
                   >
@@ -392,81 +413,85 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   <li>
                     <Link
                       href="/profile"
-                      className={navLinkClass}
+                      className={mobileNavItemClass}
                       onClick={handleMenuClose}
                       aria-label="Profile"
                       title="Profile"
                     >
-                      <CircleUserRound  className="h-4 w-4" />
+                      <CircleUserRound className="h-4 w-4" />
+                      <span>Profile</span>
                     </Link>
                   </li>
                   {role === "admin" ? (
                     <li>
                       <Link
                         href="/admin/dashboard"
-                        className={navLinkClass}
+                        className={mobileNavItemClass}
                         onClick={handleMenuClose}
                         aria-label="Admin dashboard"
                         title="Admin dashboard"
                       >
-                      <LayoutDashboard />
-
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>Admin Dashboard</span>
                       </Link>
                     </li>
                   ) : (
                     <li>
                       <Link
                         href="/dashboard"
-                        className={navLinkClass}
+                        className={mobileNavItemClass}
                         onClick={handleMenuClose}
                         aria-label="Dashboard"
                         title="Dashboard"
                       >
-                            <LayoutDashboard />
-
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>Dashboard</span>
                       </Link>
                     </li>
                   )}
                   <li>
                     <Link
                       href="/gallery"
-                      className={navLinkClass}
+                      className={mobileNavItemClass}
                       onClick={handleMenuClose}
                       aria-label="Gallery"
                       title="Gallery"
                     >
-                     <Images />
+                      <Images className="h-4 w-4" />
+                      <span>Gallery</span>
                     </Link>
                   </li>
                   <li>
                     <Link
                       href="/contact"
-                      className={navLinkClass}
+                      className={mobileNavItemClass}
                       onClick={handleMenuClose}
                       aria-label="Contact"
                       title="Contact"
                     >
-                      <PhoneCall />
+                      <PhoneCall className="h-4 w-4" />
+                      <span>Contact</span>
                     </Link>
                   </li>
                   <li>
                     <Link
                       href="/about"
-                      className={navLinkClass}
+                      className={mobileNavItemClass}
                       onClick={handleMenuClose}
                       aria-label="About"
                       title="About"
                     >
-                      <Info />
+                      <Info className="h-4 w-4" />
+                      <span>About</span>
                     </Link>
                   </li>
                   <li>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 text-left"
+                      className="inline-flex w-full items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-left transition hover:border-white/20 hover:bg-white/10"
                       onClick={() => setIsNotificationsOpen((prev) => !prev)}
                     >
-                      <BellRing className="cursor-pointer" />
+                      <BellRing className="h-4 w-4 cursor-pointer" />
                       <span>Notifications</span>
                       {notificationCount > 0 && (
                         <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-semibold text-white">
@@ -546,53 +571,56 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
                   </li>
                 </>
               ) : (
-              <>
-                <li>
-                  <Link
-                    href="/dashboard"
-                    className={navLinkClass}
-                    onClick={handleMenuClose}
-                    aria-label="Dashboard"
-                    title="Dashboard"
-                  >
-                          <LayoutDashboard />
-
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/gallery"
-                    className={navLinkClass}
-                    onClick={handleMenuClose}
-                    aria-label="Gallery"
-                    title="Gallery"
-                  >
-                    <Images />
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className={navLinkClass}
-                    onClick={handleMenuClose}
-                    aria-label="Contact"
-                    title="Contact"
-                  >
-                    <PhoneCall />
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/about"
-                    className={navLinkClass}
-                    onClick={handleMenuClose}
-                    aria-label="About"
-                    title="About"
-                  >
-                    <Info />
-                  </Link>
-                </li>
-              </>
+                <>
+                  <li>
+                    <Link
+                      href="/dashboard"
+                      className={mobileNavItemClass}
+                      onClick={handleMenuClose}
+                      aria-label="Dashboard"
+                      title="Dashboard"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/gallery"
+                      className={mobileNavItemClass}
+                      onClick={handleMenuClose}
+                      aria-label="Gallery"
+                      title="Gallery"
+                    >
+                      <Images className="h-4 w-4" />
+                      <span>Gallery</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/contact"
+                      className={mobileNavItemClass}
+                      onClick={handleMenuClose}
+                      aria-label="Contact"
+                      title="Contact"
+                    >
+                      <PhoneCall className="h-4 w-4" />
+                      <span>Contact</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/about"
+                      className={mobileNavItemClass}
+                      onClick={handleMenuClose}
+                      aria-label="About"
+                      title="About"
+                    >
+                      <Info className="h-4 w-4" />
+                      <span>About</span>
+                    </Link>
+                  </li>
+                </>
             )}
             </ul>
           </nav>
@@ -601,31 +629,34 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
             {isAuthenticated ? (
               <button
                 onClick={handleLogout}
-                className="cursor-pointer bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
+                className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
                 aria-label="Logout"
                 title="Logout"
               >
-                    <LogOut />
+                <LogOut className="h-4 w-4" />
+                Logout
               </button>
             ) : (
               <>
                 <Link
                   href="/login"
-                  className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 text-center"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
                   onClick={handleMenuClose}
                   aria-label="Login"
                   title="Login"
                 >
+                  <LogIn className="h-4 w-4" />
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="bg-emerald-600 text-white py-2 px-4 rounded hover:bg-emerald-700 text-center"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2 text-center text-white hover:bg-emerald-700"
                   onClick={handleMenuClose}
                   aria-label="Sign up"
                   title="Sign up"
                 >
-                  <UserRoundKey />
+                  <UserRoundKey className="h-4 w-4" />
+                  Sign up
                 </Link>
               </> 
             )}

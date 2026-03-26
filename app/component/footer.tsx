@@ -4,11 +4,11 @@ export default function Footer() {
   
     return (
       <footer className="mt-auto w-full bg-gray-900 text-gray-300">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-6 py-6 text-sm sm:flex-row">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-4 py-6 text-sm sm:flex-row sm:px-6">
           <a href="/" className={footerLinkClass}>
             © 2026 User Management System
           </a>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-end sm:gap-6">
             <a href="/privacy" className={footerLinkClass}>
               Privacy
             </a>
