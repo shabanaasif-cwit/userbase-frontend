@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import PageShell from "../component/page-shell"
 
-export const revalidate = 604800
+export const revalidate = 86400
 
 export const metadata = {
   title: "Terms of Service | Userbase",
@@ -10,6 +10,12 @@ export const metadata = {
 }
 
 export default function TermsPage() {
+  const effectiveDate = new Date().toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  })
+
   return (
     <PageShell variant="dark" maxWidth="narrow">
         <Card className="border-white/10 bg-white/5 text-white">
@@ -73,10 +79,10 @@ export default function TermsPage() {
 
             <Card className="mt-8 border-white/10 bg-gradient-to-r from-indigo-500/20 via-sky-500/20 to-emerald-500/20 text-white">
               <CardHeader>
-                <CardTitle className="text-base">Effective date</CardTitle>
+                <CardTitle className="text-base">Date</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-base font-medium">March 10, 2026</p>
+                <p className="text-base font-medium">{effectiveDate}</p>
               </CardContent>
             </Card>
           </CardContent>

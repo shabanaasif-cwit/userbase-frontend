@@ -2,7 +2,7 @@
 
 import { FC, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getNotificationsForUser, markNotificationsAsRead } from "@/lib/notifications-store";
 import { BellRing, UserRoundKey, CircleUserRound, LayoutDashboard, Images, Info, PhoneCall,LogIn, LogOut   } from 'lucide-react';
 
@@ -23,6 +23,7 @@ type NotificationItem = {
 
 const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -60,6 +61,27 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
       setNotifications([]);
     }
   }, [isAuthenticated, userEmail, role]);
+
+  useEffect(() => {
+    const titleByPath: Record<string, string> = {
+      "/": "Userbase",
+      "/profile": "Profile | Userbase",
+      "/dashboard": "Dashboard | Userbase",
+      "/notifications": "Notifications | Userbase",
+      "/login": "Login | Userbase",
+      "/signup": "Sign Up | Userbase",
+      "/admin/dashboard": "Admin Dashboard | Userbase",
+      "/admin/users": "Admin Users | Userbase",
+      "/admin/notifications": "Admin Notifications | Userbase",
+      "/about": "About | Userbase",
+      "/gallery": "Gallery | Userbase",
+      "/contact": "Contact | Userbase",
+      "/support": "Support | Userbase",
+      "/privacy": "Privacy Policy | Userbase",
+      "/terms": "Terms of Service | Userbase",
+    };
+    document.title = titleByPath[pathname] ?? "Userbase";
+  }, [pathname]);
 
   const navLinkClass =
     "inline-flex items-center justify-center transition-all duration-200 hover:scale-110 hover:text-gray-400 hover:underline underline-offset-4";
