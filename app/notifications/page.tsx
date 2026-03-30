@@ -109,9 +109,9 @@ export default function NotificationsPage() {
         <header className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-zinc-900/80 shadow-xl shadow-black/20 backdrop-blur-sm">
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-500/15 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl" />
-          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex flex-col gap-6 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
             <div className="flex items-start gap-5">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/25 to-sky-600/15 text-sky-400 shadow-lg shadow-sky-500/10 ring-1 ring-sky-500/20">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-sky-400/25 bg-gradient-to-br from-sky-500/30 via-sky-500/20 to-indigo-500/15 text-sky-300 shadow-lg shadow-sky-500/20 ring-1 ring-sky-400/20">
                 <Bell className="h-7 w-7" strokeWidth={1.75} />
               </div>
               <div>

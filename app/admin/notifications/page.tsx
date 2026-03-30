@@ -318,7 +318,7 @@ export default function AdminNotificationsPage() {
           <div className="h-1 w-full bg-gradient-to-r from-sky-500 to-sky-400" />
           <DialogHeader>
             <DialogTitle className="text-white">Create notification</DialogTitle>
-          </DialogHeader>image.png i want 
+          </DialogHeader>
           <NotificationForm
             formTitle={formTitle}
             setFormTitle={setFormTitle}
