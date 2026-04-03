@@ -244,7 +244,13 @@ export default function NotificationsPage() {
           </CardContent>
         </Card>
 
-        <p className="mt-10 flex justify-center">
+        <p className="mt-10 flex flex-wrap justify-center gap-4">
+          <Link
+            href="/reminders"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-200"
+          >
+            Reminders
+          </Link>
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"

@@ -7,7 +7,7 @@ import {
   fetchNotificationsForUser,
   markNotificationsReadApi,
 } from "@/lib/notifications-api";
-import { BellRing, UserRoundKey, CircleUserRound, LayoutDashboard, Images, Info, PhoneCall,LogIn, LogOut   } from 'lucide-react';
+import { BellRing, AlarmClock, UserRoundKey, CircleUserRound, LayoutDashboard, Images, Info, PhoneCall,LogIn, LogOut   } from 'lucide-react';
 
 interface HeaderProps {
   role: string;
@@ -96,6 +96,7 @@ const Header: FC<HeaderProps> = ({
       "/profile": "Profile | Userbase",
       "/dashboard": "Dashboard | Userbase",
       "/notifications": "Notifications | Userbase",
+      "/reminders": "Reminders | Userbase",
       "/login": "Login | Userbase",
       "/signup": "Sign Up | Userbase",
       "/admin/dashboard": "Admin Dashboard | Userbase",
@@ -351,13 +352,20 @@ const Header: FC<HeaderProps> = ({
                         )}
                       </div>
 
-                      <div className="mt-4 flex items-center justify-between text-xs text-slate-300">
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
                         <button
                           type="button"
                           onClick={() => handleNavigate(viewAllPath)}
                           className="cursor-pointer text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
                         >
                           View all
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleNavigate("/reminders")}
+                          className="cursor-pointer text-amber-300 hover:text-amber-200 hover:underline underline-offset-4"
+                        >
+                          Reminders
                         </button>
                         {role === "admin" && (
                           <button
@@ -371,6 +379,17 @@ const Header: FC<HeaderProps> = ({
                       </div>
                     </div>
                   )}
+                </li>
+                <li>
+                  <Link
+                    href="/reminders"
+                    className={navLinkClass}
+                    onClick={handleHeaderItemClick}
+                    aria-label="Reminders"
+                    title="Reminders"
+                  >
+                    <AlarmClock className="h-6 w-6" />
+                  </Link>
                 </li>
               </>
             ) : (
@@ -610,6 +629,13 @@ const Header: FC<HeaderProps> = ({
                           >
                             View all
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigate("/reminders")}
+                            className="text-amber-300 hover:text-amber-200 hover:underline underline-offset-4 text-left"
+                          >
+                            Reminders
+                          </button>
                           {role === "admin" && (
                             <button
                               type="button"
@@ -622,6 +648,18 @@ const Header: FC<HeaderProps> = ({
                         </div>
                       </div>
                     )}
+                  </li>
+                  <li>
+                    <Link
+                      href="/reminders"
+                      className={mobileNavItemClass}
+                      onClick={handleMenuClose}
+                      aria-label="Reminders"
+                      title="Reminders"
+                    >
+                      <AlarmClock className="h-4 w-4" />
+                      <span>Reminders</span>
+                    </Link>
                   </li>
                 </>
               ) : (
