@@ -89,7 +89,12 @@ function mapApiToUserNotification(
 function extractList(json: Record<string, unknown> | null): unknown[] {
   if (!json) return [];
   if (Array.isArray(json)) return json;
-  const n = json.notifications ?? json.items ?? json.data ?? json.results;
+  const n =
+    json.notifications ??
+    json.reminders ??
+    json.items ??
+    json.data ??
+    json.results;
   return Array.isArray(n) ? n : [];
 }
 
@@ -363,10 +368,33 @@ export async function sendReminderApi(
   }
 }
 
-/** GET /api/reminders — use when you add a reminders UI. */
+/** User reminder row from GET /api/reminders */
+export type ReminderItem = {
+  _id: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  createdAt?: string;
+};
+
+function mapReminderRow(row: unknown): ReminderItem | null {
+  if (!row || typeof row !== "object") return null;
+  const r = row as Record<string, unknown>;
+  const id = pickId(r);
+  if (!id) return null;
+  return {
+    _id: id,
+    title: String(r.title ?? ""),
+    body: textFromApi(r),
+    isRead: Boolean(r.isRead ?? r.read),
+    createdAt: typeof r.createdAt === "string" ? r.createdAt : undefined,
+  };
+}
+
+/** GET /api/reminders */
 export async function fetchReminders(
   accessToken: string | null
-): Promise<{ ok: boolean; items: unknown[]; error?: string }> {
+): Promise<{ ok: boolean; items: ReminderItem[]; error?: string }> {
   try {
     const res = await fetch(`${API_BASE}/api/reminders`, {
       method: "GET",
@@ -383,7 +411,17 @@ export async function fetchReminders(
     }
     const json = (await readJsonSafe<Record<string, unknown>>(res)) ?? {};
     const rows = extractList(json);
-    return { ok: true, items: rows };
+    const items: ReminderItem[] = [];
+    for (const row of rows) {
+      const m = mapReminderRow(row);
+      if (m) items.push(m);
+    }
+    items.sort(
+      (a, b) =>
+        new Date(b.createdAt ?? 0).getTime() -
+        new Date(a.createdAt ?? 0).getTime()
+    );
+    return { ok: true, items };
   } catch {
     return { ok: false, items: [], error: "Reminders request failed" };
   }
