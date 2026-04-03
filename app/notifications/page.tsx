@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
-  getNotificationsForUser,
-  markNotificationsAsRead,
-} from "@/lib/notifications-store";
+  fetchNotificationsForUser,
+  markNotificationsReadApi,
+} from "@/lib/notifications-api";
 import {
   Card,
   CardContent,
@@ -46,8 +46,9 @@ function formatRelative(time?: string) {
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const { user, isAuthenticated, isReady, role } = useAuth();
+  const { user, isAuthenticated, isReady, role, accessToken } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loadError, setLoadError] = useState("");
   const [activeNotification, setActiveNotification] =
     useState<NotificationItem | null>(null);
 
@@ -60,27 +61,46 @@ export default function NotificationsPage() {
   }, [isReady, isAuthenticated, router]);
 
   useEffect(() => {
-    if (user?.email) {
-      setNotifications(getNotificationsForUser(user.email, role));
-    } else {
+    if (!user?.email) {
       setNotifications([]);
+      return;
     }
-  }, [user?.email, role]);
-
-  const handleReadAll = () => {
-    if (user?.email && notifications.length > 0) {
-      markNotificationsAsRead(
-        user.email,
-        notifications.map((n) => n._id)
+    let cancelled = false;
+    setLoadError("");
+    (async () => {
+      const { ok, items, error } = await fetchNotificationsForUser(
+        accessToken,
+        { page: 1, limit: 100 }
       );
-      setNotifications(getNotificationsForUser(user.email, role));
+      if (cancelled) return;
+      if (!ok) {
+        setLoadError(error ?? "Failed to load");
+        setNotifications([]);
+        return;
+      }
+      setNotifications(items);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email, role, accessToken]);
+
+  const handleReadAll = async () => {
+    if (user?.email && notifications.length > 0) {
+      const ids = notifications.filter((n) => !n.isRead).map((n) => n._id);
+      if (ids.length) {
+        await markNotificationsReadApi(accessToken, ids);
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      }
     }
   };
 
-  const handleOpenNotification = (item: NotificationItem) => {
-    if (user?.email) {
-      markNotificationsAsRead(user.email, [item._id]);
-      setNotifications(getNotificationsForUser(user.email, role));
+  const handleOpenNotification = async (item: NotificationItem) => {
+    if (user?.email && !item.isRead) {
+      await markNotificationsReadApi(accessToken, [item._id]);
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === item._id ? { ...n, isRead: true } : n))
+      );
     }
     setActiveNotification(item);
   };
@@ -122,6 +142,9 @@ export default function NotificationsPage() {
                   Stay updated. Open any item to view details or mark everything
                   as read below.
                 </p>
+                {loadError && (
+                  <p className="mt-2 text-sm text-red-400">{loadError}</p>
+                )}
                 {unreadCount > 0 && (
                   <span className="mt-3 inline-flex items-center rounded-full bg-sky-500/20 px-3 py-1 text-xs font-semibold text-sky-300 shadow-inner ring-1 ring-sky-500/25">
                     {unreadCount} unread

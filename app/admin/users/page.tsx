@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  getManagedUsers,
-  setUserStatus,
-  updateUserRole,
+  fetchUsersFromAPI,
+  updateUserRoleAPI,
+  updateUserStatusAPI,
   type ManagedUser,
   ROLES,
+  useAuth,
 } from "@/lib/auth-context";
 import {
   Card,
@@ -41,13 +42,11 @@ const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 const ROLE_OPTIONS = [ROLES.USER, ROLES.ADMIN];
 const STATUS_OPTIONS = ["active", "deactivated"] as const;
 
-function refreshUsers(): ManagedUser[] {
-  if (typeof window === "undefined") return [];
-  return getManagedUsers();
-}
-
 export default function AdminUsersPage() {
+  const { accessToken } = useAuth();
   const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [listError, setListError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -58,7 +57,16 @@ export default function AdminUsersPage() {
   const [editRole, setEditRole] = useState("");
   const [editStatus, setEditStatus] = useState<"active" | "deactivated">("active");
 
-  const loadUsers = useCallback(() => setUsers(refreshUsers()), []);
+  const loadUsers = useCallback(async () => {
+    setListError("");
+    const res = await fetchUsersFromAPI(accessToken);
+    if (res.success && res.data) {
+      setUsers(res.data);
+    } else {
+      setUsers([]);
+      setListError(res.error ?? "Failed to load users");
+    }
+  }, [accessToken]);
 
   useEffect(() => {
     loadUsers();
@@ -101,22 +109,44 @@ export default function AdminUsersPage() {
     setEditingUser(null);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingUser) return;
+    setActionError("");
     if (editRole !== editingUser.role) {
-      updateUserRole(editingUser.email, editRole);
+      const r = await updateUserRoleAPI(
+        accessToken,
+        editingUser.email,
+        editRole
+      );
+      if (!r.success) {
+        setActionError(r.error ?? "Role update failed");
+        return;
+      }
     }
     if (editStatus !== editingUser.status) {
-      setUserStatus(editingUser.email, editStatus);
+      const s = await updateUserStatusAPI(
+        accessToken,
+        editingUser.email,
+        editStatus
+      );
+      if (!s.success) {
+        setActionError(s.error ?? "Status update failed");
+        return;
+      }
     }
-    loadUsers();
+    await loadUsers();
     closeEdit();
   };
 
-  const handleToggleStatus = (user: ManagedUser) => {
-    const next = user.status === "active" ? "deactivated" : "active";
-    setUserStatus(user.email, next);
-    loadUsers();
+  const handleToggleStatus = async (u: ManagedUser) => {
+    setActionError("");
+    const next = u.status === "active" ? "deactivated" : "active";
+    const s = await updateUserStatusAPI(accessToken, u.email, next);
+    if (!s.success) {
+      setActionError(s.error ?? "Status update failed");
+      return;
+    }
+    await loadUsers();
   };
 
   return (
@@ -155,6 +185,11 @@ export default function AdminUsersPage() {
             <CardDescription className="text-sm text-zinc-500">
               {filtered.length} user{filtered.length !== 1 ? "s" : ""} · Search and filter below.
             </CardDescription>
+            {(listError || actionError) && (
+              <p className="text-sm text-red-400">
+                {actionError || listError}
+              </p>
+            )}
           </CardHeader>
           <CardContent className="space-y-4 p-4 sm:p-6">
             {/* Search and filters */}

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { getNotificationsForUser } from "@/lib/notifications-store"
+import { fetchNotificationsForUser } from "@/lib/notifications-api"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import {
@@ -42,6 +42,7 @@ type NotificationItem = {
   endsAt?: string | null
   createdAt?: string
   updatedAt?: string
+  isRead?: boolean
 }
 
 const stats = [
@@ -60,23 +61,43 @@ const activity = [
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, isAuthenticated, isReady, role } = useAuth()
+  const { user, isAuthenticated, isReady, role, accessToken } = useAuth()
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
-  const [isLoadingNotifications] = useState(false)
-  const [notificationError] = useState("")
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false)
+  const [notificationError, setNotificationError] = useState("")
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([])
 
   useEffect(() => {
-    if (user?.email) {
-      setNotifications(getNotificationsForUser(user.email, role))
-    } else {
+    if (!user?.email) {
       setNotifications([])
+      return
     }
-  }, [user?.email, role])
+    let cancelled = false
+    setIsLoadingNotifications(true)
+    setNotificationError("")
+    ;(async () => {
+      const { ok, items, error } = await fetchNotificationsForUser(
+        accessToken,
+        { page: 1, limit: 20 }
+      )
+      if (cancelled) return
+      setIsLoadingNotifications(false)
+      if (!ok) {
+        setNotificationError(error ?? "Could not load notifications")
+        setNotifications([])
+        return
+      }
+      setNotifications(items)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.email, role, accessToken])
 
   const activeNotification = useMemo(() => {
     return notifications.find(
-      (item) => !dismissedNotificationIds.includes(item._id)
+      (item) =>
+        !item.isRead && !dismissedNotificationIds.includes(item._id)
     ) || null
   }, [notifications, dismissedNotificationIds])
 

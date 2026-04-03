@@ -3,13 +3,17 @@
 import { FC, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { getNotificationsForUser, markNotificationsAsRead } from "@/lib/notifications-store";
+import {
+  fetchNotificationsForUser,
+  markNotificationsReadApi,
+} from "@/lib/notifications-api";
 import { BellRing, UserRoundKey, CircleUserRound, LayoutDashboard, Images, Info, PhoneCall,LogIn, LogOut   } from 'lucide-react';
 
 interface HeaderProps {
   role: string;
   isAuthenticated: boolean;
   userEmail?: string | null;
+  accessToken: string | null;
   onLogout: () => void;
 }
 
@@ -21,7 +25,13 @@ type NotificationItem = {
   isRead?: boolean;
 };
 
-const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout }) => {
+const Header: FC<HeaderProps> = ({
+  role,
+  isAuthenticated,
+  userEmail,
+  accessToken,
+  onLogout,
+}) => {
   const router = useRouter();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -54,13 +64,31 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
   };
 
   useEffect(() => {
-    if (isAuthenticated && userEmail) {
-      setNotifications(getNotificationsForUser(userEmail, role));
-      setNotificationError("");
-    } else {
+    if (!isAuthenticated || !userEmail) {
       setNotifications([]);
+      return;
     }
-  }, [isAuthenticated, userEmail, role]);
+    let cancelled = false;
+    setIsLoadingNotifications(true);
+    setNotificationError("");
+    (async () => {
+      const { ok, items, error } = await fetchNotificationsForUser(
+        accessToken,
+        { page: 1, limit: 30 }
+      );
+      if (cancelled) return;
+      setIsLoadingNotifications(false);
+      if (!ok) {
+        setNotificationError(error ?? "Could not load notifications");
+        setNotifications([]);
+        return;
+      }
+      setNotifications(items);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, userEmail, role, accessToken]);
 
   useEffect(() => {
     const titleByPath: Record<string, string> = {
@@ -96,21 +124,25 @@ const Header: FC<HeaderProps> = ({ role, isAuthenticated, userEmail, onLogout })
     return String(notificationCount);
   }, [notificationCount]);
 
-  const handleOpenNotification = (item: NotificationItem) => {
-    if (userEmail) {
-      markNotificationsAsRead(userEmail, [item._id]);
-      setNotifications(getNotificationsForUser(userEmail, role));
+  const handleOpenNotification = async (item: NotificationItem) => {
+    if (userEmail && !item.isRead) {
+      await markNotificationsReadApi(accessToken, [item._id]);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n._id === item._id ? { ...n, isRead: true } : n
+        )
+      );
     }
     setActiveNotification(item);
   };
 
-  const handleReadAll = () => {
+  const handleReadAll = async () => {
     if (userEmail && notifications.length > 0) {
-      markNotificationsAsRead(
-        userEmail,
-        notifications.map((n) => n._id)
-      );
-      setNotifications(getNotificationsForUser(userEmail, role));
+      const ids = notifications.filter((n) => !n.isRead).map((n) => n._id);
+      if (ids.length) {
+        await markNotificationsReadApi(accessToken, ids);
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      }
     }
     setIsNotificationsOpen(false);
   };

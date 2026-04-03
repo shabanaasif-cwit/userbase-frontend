@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth, isAdmin } from "@/lib/auth-context";
-import { getNotificationsForUser, markNotificationsAsRead } from "@/lib/notifications-store";
+import {
+  fetchNotificationsForUser,
+  markNotificationsReadApi,
+} from "@/lib/notifications-api";
 
 type NotificationItem = {
   _id: string;
@@ -50,18 +53,28 @@ function getDisplayName(name?: string | null, email?: string) {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isAuthenticated, isReady, role } = useAuth();
+  const { user, isAuthenticated, isReady, role, accessToken } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeNotification, setActiveNotification] =
     useState<NotificationItem | null>(null);
 
   useEffect(() => {
-    if (user?.email) {
-      setNotifications(getNotificationsForUser(user.email, role));
-    } else {
+    if (!user?.email) {
       setNotifications([]);
+      return;
     }
-  }, [user?.email, role]);
+    let cancelled = false;
+    (async () => {
+      const { ok, items } = await fetchNotificationsForUser(accessToken, {
+        page: 1,
+        limit: 20,
+      });
+      if (!cancelled && ok) setNotifications(items);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email, role, accessToken]);
 
   const profile = user
     ? { id: "", name: user.name ?? "", email: user.email, role }
@@ -178,7 +191,7 @@ export default function ProfilePage() {
               <p className="text-xs uppercase tracking-[0.3em] text-emerald-200/80">
                 Signal feed
               </p>
-              <CardTitle className="text-2xl">Recent activity</CardTitle>
+              <CardTitle className="text-2xl">Recent Activity</CardTitle>
               <p className="text-sm text-slate-300">
                 The pulse of your workspace, surfaced in one view.
               </p>
@@ -192,14 +205,15 @@ export default function ProfilePage() {
                   {notifications.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => {
-                        if (user?.email) {
-                          markNotificationsAsRead(
-                            user.email,
-                            notifications.map((n) => n._id)
-                          );
-                          setNotifications(
-                            getNotificationsForUser(user.email, role)
+                      onClick={async () => {
+                        if (!user?.email) return;
+                        const ids = notifications
+                          .filter((n) => !n.isRead)
+                          .map((n) => n._id);
+                        if (ids.length) {
+                          await markNotificationsReadApi(accessToken, ids);
+                          setNotifications((prev) =>
+                            prev.map((n) => ({ ...n, isRead: true }))
                           );
                         }
                       }}
@@ -219,10 +233,16 @@ export default function ProfilePage() {
                       <button
                         key={item._id}
                         type="button"
-                        onClick={() => {
-                          if (user?.email) {
-                            markNotificationsAsRead(user.email, [item._id]);
-                            setNotifications(getNotificationsForUser(user.email, role));
+                        onClick={async () => {
+                          if (user?.email && !item.isRead) {
+                            await markNotificationsReadApi(accessToken, [
+                              item._id,
+                            ]);
+                            setNotifications((prev) =>
+                              prev.map((n) =>
+                                n._id === item._id ? { ...n, isRead: true } : n
+                              )
+                            );
                           }
                           setActiveNotification(item);
                         }}
@@ -353,13 +373,17 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     if (user?.email && notifications.length > 0) {
-                      markNotificationsAsRead(
-                        user.email,
-                        notifications.map((n) => n._id)
-                      );
-                      setNotifications(getNotificationsForUser(user.email, role));
+                      const ids = notifications
+                        .filter((n) => !n.isRead)
+                        .map((n) => n._id);
+                      if (ids.length) {
+                        await markNotificationsReadApi(accessToken, ids);
+                        setNotifications((prev) =>
+                          prev.map((n) => ({ ...n, isRead: true }))
+                        );
+                      }
                     }
                     setActiveNotification(null);
                   }}
