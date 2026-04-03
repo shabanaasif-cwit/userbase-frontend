@@ -8,11 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
-const STORAGE_KEY = "userbase-auth";
-const ADMIN_EMAILS_KEY = "userbase-admin-emails";
-const REGISTERED_USERS_KEY = "userbase-registered-users";
-const USER_STATUS_KEY = "userbase-user-status";
+import { API_BASE, authHeaders, readJsonSafe } from "./api-config";
 
 export type ManagedUser = {
   email: string;
@@ -21,155 +17,124 @@ export type ManagedUser = {
   status: "active" | "deactivated";
 };
 
-type RegisteredUser = {
-  email: string;
-  password: string;
-  name?: string;
-  role?: string;
-};
+type ErrorResponse = { message?: string; error?: string };
 
-function getRegisteredUsers(): RegisteredUser[] {
-  if (typeof window === "undefined") return [];
+export async function fetchUsersFromAPI(
+  accessToken: string | null
+): Promise<{
+  success: boolean;
+  data?: ManagedUser[];
+  error?: string;
+}> {
   try {
-    const raw = localStorage.getItem(REGISTERED_USERS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as RegisteredUser[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
+    const res = await fetch(`${API_BASE}/api/users`, {
+      method: "GET",
+      headers: authHeaders(accessToken),
+      credentials: "include",
+    });
 
-function addRegisteredUser(
-  email: string,
-  password: string,
-  name?: string,
-  role?: string
-) {
-  try {
-    const lower = email.trim().toLowerCase();
-    if (!lower || !password) return;
-    const users = getRegisteredUsers();
-    if (users.some((u) => u.email.toLowerCase() === lower)) return;
-    localStorage.setItem(
-      REGISTERED_USERS_KEY,
-      JSON.stringify([
-        ...users,
-        { email: lower, password, name: name?.trim(), role },
-      ])
-    );
-  } catch {
-    // ignore
-  }
-}
-
-function updateRegisteredUserName(email: string, name: string) {
-  try {
-    const lower = email.trim().toLowerCase();
-    const trimmedName = name?.trim();
-    if (!lower || !trimmedName) return;
-    const users = getRegisteredUsers();
-    const updated = users.map((u) =>
-      u.email === lower ? { ...u, name: trimmedName } : u
-    );
-    localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(updated));
-  } catch {
-    // ignore
-  }
-}
-
-function getUserStatusMap(): Record<string, "active" | "deactivated"> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = localStorage.getItem(USER_STATUS_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null) return {};
-    return parsed as Record<string, "active" | "deactivated">;
-  } catch {
-    return {};
-  }
-}
-
-function setUserStatusStore(email: string, status: "active" | "deactivated") {
-  try {
-    const lower = email.trim().toLowerCase();
-    const map = getUserStatusMap();
-    map[lower] = status;
-    localStorage.setItem(USER_STATUS_KEY, JSON.stringify(map));
-  } catch {
-    // ignore
-  }
-}
-
-function getAdminEmails(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(ADMIN_EMAILS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as string[];
-    return Array.isArray(parsed) ? parsed.map((e) => e.toLowerCase()) : [];
-  } catch {
-    return [];
-  }
-}
-
-function updateRegisteredUserRole(email: string, newRole: string) {
-  try {
-    const lower = email.trim().toLowerCase();
-    const users = getRegisteredUsers();
-    const updated = users.map((u) =>
-      u.email === lower ? { ...u, role: newRole } : u
-    );
-    localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(updated));
-    const adminEmails = getAdminEmails();
-    const isAdminNow = newRole.toLowerCase() === ROLES.ADMIN;
-    if (isAdminNow && !adminEmails.includes(lower)) {
-      localStorage.setItem(
-        ADMIN_EMAILS_KEY,
-        JSON.stringify([...adminEmails, lower])
-      );
-    } else if (!isAdminNow && adminEmails.includes(lower)) {
-      localStorage.setItem(
-        ADMIN_EMAILS_KEY,
-        JSON.stringify(adminEmails.filter((e) => e !== lower))
-      );
+    if (!res.ok) {
+      const err = await readJsonSafe<ErrorResponse>(res);
+      const msg = err?.message ?? err?.error ?? "Failed to fetch users";
+      return { success: false, error: msg };
     }
-  } catch {
-    // ignore
+
+    //try to extract the users from the response even if th response shapeis slightly different
+    const json = await readJsonSafe<Record<string, unknown>>(res);
+    const raw = json?.users ?? json?.data ?? json;
+    const users = Array.isArray(raw) ? raw : [];
+
+    const managedUsers: ManagedUser[] = users.map((u: Record<string, unknown>) => ({
+      email: String(u.email ?? ""),
+      name:
+        u.firstName || u.lastName
+          ? `${String(u.firstName ?? "").trim()} ${String(u.lastName ?? "").trim()}`.trim()
+          : String(u.name ?? u.email ?? ""),
+      role:
+        String(u.role ?? "").toLowerCase() === ROLES.ADMIN
+          ? ROLES.ADMIN
+          : ROLES.USER,
+      status:
+        u.status === "deactivated" ? "deactivated" : "active",
+    }));
+
+    return { success: true, data: managedUsers };
+  } catch (e) {
+    const errorMsg = e instanceof Error ? e.message : "Unknown error";
+    return {
+      success: false,
+      error: `Cannot reach server: ${errorMsg}`,
+    };
   }
 }
 
-export function getManagedUsers(): ManagedUser[] {
-  const statusMap = getUserStatusMap();
-  return getRegisteredUsers().map((u) => ({
-    email: u.email,
-    name: u.name ?? u.email,
-    role: u.role ?? ROLES.USER,
-    status: (statusMap[u.email] as "active" | "deactivated") ?? "active",
-  }));
+export async function updateUserRoleAPI(
+  accessToken: string | null,
+  userEmail: string,
+  newRole: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!userEmail?.trim() || !newRole?.trim()) {
+      return { success: false, error: "Email and role are required" };
+    }
+
+    const res = await fetch(
+      `${API_BASE}/api/users/${encodeURIComponent(userEmail.trim())}/role`,
+      {
+        method: "PATCH",
+        headers: authHeaders(accessToken),
+        credentials: "include",
+        body: JSON.stringify({ role: newRole }),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await readJsonSafe<ErrorResponse>(res);
+      return {
+        success: false,
+        error: err?.message ?? err?.error ?? "Failed to update user role",
+      };
+    }
+
+    return { success: true };
+  } catch (e) {
+    const errorMsg = e instanceof Error ? e.message : "Unknown error";
+    return { success: false, error: `Cannot reach server: ${errorMsg}` };
+  }
 }
 
-export function setUserStatus(
-  email: string,
+export async function updateUserStatusAPI(
+  accessToken: string | null,
+  userEmail: string,
   status: "active" | "deactivated"
-): void {
-  setUserStatusStore(email, status);
-}
-
-export function updateUserRole(email: string, role: string): void {
-  updateRegisteredUserRole(email, role);
-}
-
-function addAdminEmail(email: string) {
+): Promise<{ success: boolean; error?: string }> {
   try {
-    const emails = getAdminEmails();
-    const lower = email.trim().toLowerCase();
-    if (lower && !emails.includes(lower)) {
-      localStorage.setItem(ADMIN_EMAILS_KEY, JSON.stringify([...emails, lower]));
+    if (!userEmail?.trim() || !status) {
+      return { success: false, error: "Email and status are required" };
     }
-  } catch {
-    // ignore
+
+    const res = await fetch(
+      `${API_BASE}/api/users/${encodeURIComponent(userEmail.trim())}/status`,
+      {
+        method: "PATCH",
+        headers: authHeaders(accessToken),
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await readJsonSafe<ErrorResponse>(res);
+      return {
+        success: false,
+        error: err?.message ?? err?.error ?? "Failed to update user status",
+      };
+    }
+
+    return { success: true };
+  } catch (e) {
+    const errorMsg = e instanceof Error ? e.message : "Unknown error";
+    return { success: false, error: `Cannot reach server: ${errorMsg}` };
   }
 }
 
@@ -179,173 +144,327 @@ export type AuthUser = {
   name?: string;
 };
 
-export type AuthSession = {
-  user: AuthUser;
-  token?: string | null;
-  expiresAt?: number | null;
-};
+type AuthLoginResult = { success: boolean; error?: string };
 
 type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
   role: string;
-  /** True after session has been read from localStorage (avoids redirecting before hydration) */
+  accessToken: string | null;
+  /** Session restored from API (refresh cookie / me); no localStorage */
   isReady: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (
+    email: string,
+    password: string,
+    role?: string
+  ) => Promise<AuthLoginResult>;
   signup: (data: {
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
+    confirmPassword: string;
     role: string;
     adminKey?: string;
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  updateName: (name: string) => void;
+  updateName: (name: string) => Promise<{ success: boolean; error?: string }>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function loadStoredSession(): AuthUser | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as AuthSession | AuthUser;
-    const user = "user" in parsed ? parsed.user : (parsed as AuthUser);
-    return user?.email ? user : null;
-  } catch {
-    return null;
-  }
-}
-
-function persistSession(
-  user: AuthUser,
-  token?: string | null,
-  expiresAt?: number | null
-) {
-  try {
-    const payload: AuthSession = {
-      user,
-      token: token ?? null,
-      expiresAt: expiresAt ?? null,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  } catch {
-    // ignore
-  }
-}
-
-function clearStoredSession() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // ignore
-  }
+function mapMeUser(raw: Record<string, unknown>): AuthUser | null {
+  const email = String(raw.email ?? "").trim().toLowerCase();
+  if (!email) return null;
+  const role =
+    String(raw.role ?? "").toLowerCase() === ROLES.ADMIN
+      ? ROLES.ADMIN
+      : ROLES.USER;
+  const name =
+    [String(raw.firstName ?? "").trim(), String(raw.lastName ?? "").trim()]
+      .filter(Boolean)
+      .join(" ") || String(raw.name ?? "").trim() || undefined;
+  return { email, role, name };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    let loaded = loadStoredSession();
-    if (loaded && !loaded.name) {
-      const registered = getRegisteredUsers().find(
-        (u) => u.email === loaded!.email
-      );
-      if (registered?.name) {
-        loaded = { ...loaded, name: registered.name };
-        persistSession(loaded);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
+          method: "GET",
+          headers: authHeaders(null),
+          credentials: "include",
+        });
+        if (cancelled) return;
+        if (res.ok) {
+          const json =
+            (await readJsonSafe<Record<string, unknown>>(res)) ?? {};
+          const raw =
+            (json.user as Record<string, unknown>) ??
+            (json.data as Record<string, unknown>) ??
+            json;
+          const u = mapMeUser(raw);
+          const token =
+            typeof json.accessToken === "string"
+              ? json.accessToken
+              : typeof (raw as { accessToken?: string }).accessToken ===
+                  "string"
+                ? (raw as { accessToken: string }).accessToken
+                : null;
+          if (u) {
+            setUser(u);
+            setAccessToken(token);
+          } else {
+            setUser(null);
+            setAccessToken(null);
+          }
+        } else {
+          setUser(null);
+          setAccessToken(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setUser(null);
+          setAccessToken(null);
+        }
+      } finally {
+        if (!cancelled) setMounted(true);
       }
-    }
-    setUser(loaded);
-    setMounted(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string): Promise<boolean> => {
-      if (!email.trim() || !password || password.length < 8) return false;
+    async (
+      email: string,
+      password: string,
+      role?: string
+    ): Promise<AuthLoginResult> => {
+      if (!email.trim() || !password || password.length < 8) {
+        return { success: false, error: "Invalid email or password." };
+      }
+
       const lowerEmail = email.trim().toLowerCase();
-      const registered = getRegisteredUsers();
-      const match = registered.find(
-        (u) => u.email === lowerEmail && u.password === password
-      );
-      if (!match) return false;
-      const status = getUserStatusMap()[lowerEmail];
-      if (status === "deactivated") return false;
-      const adminEmails = getAdminEmails();
-      const role = adminEmails.includes(lowerEmail) ? ROLES.ADMIN : ROLES.USER;
-      const data: AuthUser = {
-        email: lowerEmail,
-        role,
-        name: match.name ?? undefined,
-      };
-      setUser(data);
-      persistSession(data);
-      return true;
+      const roleForApi =
+        role?.trim().toLowerCase() === ROLES.ADMIN ? ROLES.ADMIN : ROLES.USER;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email: lowerEmail,
+            password,
+            role: roleForApi,
+          }),
+        });
+
+        type LoginResponse = {
+          user: {
+            email: string;
+            role?: string;
+            firstName?: string;
+            lastName?: string;
+          };
+          accessToken?: string;
+        };
+
+        if (!res.ok) {
+          const err = await readJsonSafe<ErrorResponse>(res);
+          const msg =
+            err?.message ??
+            err?.error ??
+            "Login failed. Please check your email and password.";
+          return { success: false, error: msg };
+        }
+
+        const json = await readJsonSafe<LoginResponse>(res);
+        const backendUser = json?.user;
+        if (!backendUser?.email) {
+          return {
+            success: false,
+            error: "Login failed. Please try again.",
+          };
+        }
+
+        const roleResolved =
+          backendUser.role?.toLowerCase() === ROLES.ADMIN
+            ? ROLES.ADMIN
+            : ROLES.USER;
+        const fullName =
+          [backendUser.firstName?.trim(), backendUser.lastName?.trim()]
+            .filter(Boolean)
+            .join(" ") || undefined;
+        const userData: AuthUser = {
+          email: backendUser.email.toLowerCase(),
+          role: roleResolved,
+          name: fullName,
+        };
+
+        const token = json?.accessToken ?? null;
+        setUser(userData);
+        setAccessToken(token);
+        return { success: true };
+      } catch {
+        return {
+          success: false,
+          error: "Cannot reach server. Is the API running on " + API_BASE + "?",
+        };
+      }
     },
     []
   );
 
   const signup = useCallback(
     async (data: {
-      name: string;
+      firstName: string;
+      lastName: string;
       email: string;
       password: string;
+      confirmPassword: string;
       role: string;
       adminKey?: string;
     }): Promise<{ success: boolean; error?: string }> => {
-      if (!data.email?.trim() || !data.role) {
+      if (
+        !data.firstName?.trim() ||
+        !data.lastName?.trim() ||
+        !data.email?.trim() ||
+        !data.role
+      ) {
         return { success: false, error: "Signup failed. Please try again." };
       }
-      const lowerEmail = data.email.trim().toLowerCase();
-      const existing = getRegisteredUsers().some((u) => u.email === lowerEmail);
-      if (existing) {
-        return { success: false, error: "This email is already registered." };
-      }
-      const role = data.role === ROLES.ADMIN ? ROLES.ADMIN : ROLES.USER;
-      const userData: AuthUser = {
-        email: lowerEmail,
-        role,
-        name: data.name?.trim(),
+
+      const payload = {
+        firstName: data.firstName?.trim(),
+        lastName: data.lastName?.trim(),
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+        role: data.role,
+        adminKey: data.adminKey,
       };
-      addRegisteredUser(
-        userData.email,
-        data.password,
-        userData.name,
-        role
-      );
-      if (role === ROLES.ADMIN) {
-        addAdminEmail(userData.email);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+
+        type SignupResponse = {
+          user: {
+            email: string;
+            role?: string;
+            firstName?: string;
+            lastName?: string;
+          };
+          accessToken?: string;
+        };
+
+        if (!res.ok) {
+          const err = await readJsonSafe<ErrorResponse>(res);
+          const msg =
+            err?.message ?? err?.error ?? "Signup failed. Please try again.";
+          return { success: false, error: msg };
+        }
+
+        const json = await readJsonSafe<SignupResponse>(res);
+        const backendUser = json?.user;
+        if (!backendUser?.email) {
+          return { success: false, error: "Signup failed. Please try again." };
+        }
+
+        const role =
+          backendUser.role?.toLowerCase() === ROLES.ADMIN
+            ? ROLES.ADMIN
+            : ROLES.USER;
+        const fullName =
+          [backendUser.firstName?.trim(), backendUser.lastName?.trim()]
+            .filter(Boolean)
+            .join(" ") || undefined;
+        const userData: AuthUser = {
+          email: backendUser.email.toLowerCase(),
+          role,
+          name: fullName,
+        };
+
+        const token = json?.accessToken ?? null;
+        setUser(userData);
+        setAccessToken(token);
+        return { success: true };
+      } catch {
+        return { success: false, error: "Signup failed. Please try again." };
       }
-      setUser(userData);
-      persistSession(userData);
-      return { success: true };
     },
     []
   );
 
   const logout = useCallback(async () => {
+    try {
+      await fetch(`${API_BASE}/api/auth/logout`, {
+        method: "POST",
+        headers: authHeaders(accessToken),
+        credentials: "include",
+      });
+    } catch {
+      // still clear client state
+    }
     setUser(null);
-    clearStoredSession();
-  }, []);
+    setAccessToken(null);
+  }, [accessToken]);
 
-  const updateName = useCallback((name: string) => {
-    const trimmed = name?.trim();
-    if (!trimmed) return;
-    setUser((prev) => {
-      if (!prev) return prev;
-      const updated = { ...prev, name: trimmed };
-      persistSession(updated);
-      updateRegisteredUserName(prev.email, trimmed);
-      return updated;
-    });
-  }, []);
+  const updateName = useCallback(
+    async (name: string) => {
+      const trimmed = name?.trim();
+      if (!trimmed) return { success: false, error: "Name is required." };
+      const parts = trimmed.split(/\s+/);
+      const firstName = parts[0] ?? "";
+      const lastName = parts.slice(1).join(" ") || "";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/users/me`, {
+          method: "PATCH",
+          headers: authHeaders(accessToken),
+          credentials: "include",
+          body: JSON.stringify({ firstName, lastName }),
+        });
+
+        if (!res.ok) {
+          const err = await readJsonSafe<ErrorResponse>(res);
+          return {
+            success: false,
+            error:
+              err?.message ?? err?.error ?? "Could not update profile on server.",
+          };
+        }
+
+        setUser((prev) => {
+          if (!prev) return prev;
+          return { ...prev, name: trimmed };
+        });
+        return { success: true };
+      } catch {
+        return { success: false, error: "Cannot reach server." };
+      }
+    },
+    [accessToken]
+  );
 
   const value: AuthContextValue = {
     user: mounted ? user : null,
     isAuthenticated: !!user,
     role: user?.role ?? "user",
+    accessToken: mounted ? accessToken : null,
     isReady: mounted,
     login,
     signup,
@@ -373,7 +492,7 @@ export const authValidation = {
   passwordInvalidChars: /[,\[\]\(\)\s`]/,
 };
 
-/** Role-based access (UI only): normalize and check role from auth context / token payload */
+
 export const ROLES = {
   ADMIN: "admin",
   USER: "user",

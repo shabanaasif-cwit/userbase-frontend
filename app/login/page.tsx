@@ -9,7 +9,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
-import { useAuth, authValidation, isAdmin } from "@/lib/auth-context";
+import {
+  useAuth,
+  authValidation,
+  isAdmin,
+  ROLES,
+} from "@/lib/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,6 +31,8 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  /** Sent to API — backend expects `role` on login body */
+  const [loginRole, setLoginRole] = useState<string>(ROLES.USER);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -57,15 +64,21 @@ export default function LoginPage() {
       setErrorMessage("Password must include at least one special symbol.");
       return;
     }
+    if (!loginRole) {
+      setErrorMessage("Role is required.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const success = await login(email, password);
-      if (success) {
+      const result = await login(email, password, loginRole);
+      if (result.success) {
         router.push("/profile");
         return;
       }
-      setErrorMessage("Login failed. Please check your email and password.");
+      setErrorMessage(
+        result.error ?? "Login failed. Please check your email and password."
+      );
     } catch {
       setErrorMessage("Login failed. Please try again.");
     } finally {
@@ -156,6 +169,27 @@ export default function LoginPage() {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="login-role" className="text-slate-200">
+                    Role <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="login-role"
+                    value={loginRole}
+                    onChange={(e) => setLoginRole(e.target.value)}
+                    className="h-11 w-full rounded-lg border border-white/10 bg-slate-950/40 px-2.5 text-base text-white focus:border-sky-400 focus:outline-none"
+                    required
+                    aria-label="Account role"
+                  >
+                    <option value={ROLES.USER}>User</option>
+                    <option value={ROLES.ADMIN}>Admin</option>
+                  </select>
+                  <p className="text-xs text-slate-500">
+                    Choose the role that matches your account. It must match how
+                    you were registered.
+                  </p>
+                </div>
+
                 {errorMessage && (
                   <p className="text-sm text-red-400">{errorMessage}</p>
                 )}
@@ -198,3 +232,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

@@ -3,17 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  getNotifications,
-  addNotification,
-  updateNotification,
-  deleteNotification,
-  sendReminder,
+  fetchNotificationsAdmin,
+  createNotificationApi,
+  updateNotificationApi,
+  deleteNotificationApi,
+  sendReminderApi,
   getTargetSummary,
   type StoredNotification,
   type NotificationTargetType,
-} from "@/lib/notifications-store";
-import { getManagedUsers } from "@/lib/auth-context";
-import { ROLES } from "@/lib/auth-context";
+} from "@/lib/notifications-api";
+import { fetchUsersFromAPI, ROLES, useAuth } from "@/lib/auth-context";
 import {
   Card,
   CardContent,
@@ -69,6 +68,8 @@ function formatDate(iso: string): string {
 }
 
 export default function AdminNotificationsPage() {
+  const { accessToken } = useAuth();
+  const [apiError, setApiError] = useState("");
   const [notifications, setNotifications] = useState<StoredNotification[]>([]);
   const [managedUsers, setManagedUsers] = useState<{ email: string; name: string }[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
@@ -83,12 +84,26 @@ export default function AdminNotificationsPage() {
   const [formTargetRole, setFormTargetRole] = useState<string>(ROLES.USER);
   const [formTargetUserIds, setFormTargetUserIds] = useState<string[]>([]);
 
-  const load = useCallback(() => {
-    setNotifications(getNotifications());
-    setManagedUsers(
-      getManagedUsers().map((u) => ({ email: u.email, name: u.name || u.email }))
-    );
-  }, []);
+  const load = useCallback(async () => {
+    setApiError("");
+    const [notifRes, usersRes] = await Promise.all([
+      fetchNotificationsAdmin(accessToken, { page: 1, limit: 200 }),
+      fetchUsersFromAPI(accessToken),
+    ]);
+    if (!notifRes.ok) {
+      setApiError(notifRes.error ?? "Failed to load notifications");
+      setNotifications([]);
+    } else {
+      setNotifications(notifRes.items);
+    }
+    if (usersRes.success && usersRes.data) {
+      setManagedUsers(
+        usersRes.data.map((u) => ({ email: u.email, name: u.name || u.email }))
+      );
+    } else {
+      setManagedUsers([]);
+    }
+  }, [accessToken]);
 
   useEffect(() => {
     load();
@@ -123,8 +138,9 @@ export default function AdminNotificationsPage() {
     setDeleteOpen(true);
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!formTitle.trim()) return;
+    setApiError("");
     const payload = {
       title: formTitle.trim(),
       message: formMessage.trim(),
@@ -132,14 +148,19 @@ export default function AdminNotificationsPage() {
       ...(formTargetType === "role" && { targetRole: formTargetRole }),
       ...(formTargetType === "users" && { targetUserIds: formTargetUserIds }),
     };
-    addNotification(payload);
-    load();
+    const res = await createNotificationApi(accessToken, payload);
+    if (!res.ok) {
+      setApiError(res.error ?? "Create failed");
+      return;
+    }
+    await load();
     setCreateOpen(false);
     resetForm();
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editingId || !formTitle.trim()) return;
+    setApiError("");
     const payload = {
       title: formTitle.trim(),
       message: formMessage.trim(),
@@ -147,24 +168,37 @@ export default function AdminNotificationsPage() {
       ...(formTargetType === "role" && { targetRole: formTargetRole }),
       ...(formTargetType === "users" && { targetUserIds: formTargetUserIds }),
     };
-    updateNotification(editingId, payload);
-    load();
+    const res = await updateNotificationApi(accessToken, editingId, payload);
+    if (!res.ok) {
+      setApiError(res.error ?? "Update failed");
+      return;
+    }
+    await load();
     setEditOpen(false);
     resetForm();
   };
 
-  const handleDelete = () => {
-    if (deletingId) {
-      deleteNotification(deletingId);
-      load();
-      setDeleteOpen(false);
-      setDeletingId(null);
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    setApiError("");
+    const res = await deleteNotificationApi(accessToken, deletingId);
+    if (!res.ok) {
+      setApiError(res.error ?? "Delete failed");
+      return;
     }
+    await load();
+    setDeleteOpen(false);
+    setDeletingId(null);
   };
 
-  const handleReminder = (id: string) => {
-    sendReminder(id);
-    load();
+  const handleReminder = async (id: string) => {
+    setApiError("");
+    const res = await sendReminderApi(accessToken, id);
+    if (!res.ok) {
+      setApiError(res.error ?? "Reminder failed (check API route)");
+      return;
+    }
+    await load();
   };
 
   const toggleUserInForm = (email: string) => {
@@ -196,10 +230,12 @@ export default function AdminNotificationsPage() {
                 Manage Notifications
               </h1>
               <p className="mt-2 max-w-lg text-sm text-zinc-400">
-                Create, edit, and delete notifications. Target all users, by role, or
-                specific users (frontend-only; data stored in localStorage until
-                backend is available).
+                Create, edit, and delete notifications. Data is stored in MongoDB via
+                your API.
               </p>
+              {apiError && (
+                <p className="mt-2 text-sm text-red-400">{apiError}</p>
+              )}
             </div>
           </div>
         </section>

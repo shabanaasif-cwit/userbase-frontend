@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
+import { API_BASE } from "@/lib/api-config"
+
 /**
- * Client-only contact form (state, validation, localStorage).
- * Page shell stays server-rendered for faster initial paint.
+ * Contact form — submits to backend API (MongoDB). No localStorage.
  */
 export default function ContactForm() {
   const [name, setName] = useState("")
@@ -19,27 +20,40 @@ export default function ContactForm() {
   const [errorMessage, setErrorMessage] = useState("")
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setErrorMessage("")
 
     if (!name || !email || !message) {
       setErrorMessage("All fields are required.")
       return
     }
 
-    const formData = { name, email, message }
-    if (typeof window !== "undefined") {
-      localStorage.setItem("contactFormData", JSON.stringify(formData))
+    try {
+      const res = await fetch(`${API_BASE}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setErrorMessage(
+          typeof err?.message === "string"
+            ? err.message
+            : "Could not send message. Try again later."
+        )
+        return
+      }
+
+      setName("")
+      setEmail("")
+      setMessage("")
+      setSuccessMessage("Your message has been submitted successfully!")
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      timeoutRef.current = setTimeout(() => setSuccessMessage(""), 5000)
+    } catch {
+      setErrorMessage("Cannot reach server. Is the API running?")
     }
-
-    setName("")
-    setEmail("")
-    setMessage("")
-    setErrorMessage("")
-    setSuccessMessage("Your message has been submitted successfully!")
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    timeoutRef.current = setTimeout(() => setSuccessMessage(""), 5000)
   }
 
   useEffect(() => {

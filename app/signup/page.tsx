@@ -22,7 +22,8 @@ export default function SignupPage() {
     }
   }, [isReady, isAuthenticated, userRole, router]);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState(""); // Phone number state
   const [password, setPassword] = useState("");
@@ -57,8 +58,8 @@ export default function SignupPage() {
     e.preventDefault();
     setErrorMessage("");
 
-    if (!name.trim()) {
-      setErrorMessage("Full name is required.");
+    if (!firstName.trim() || !lastName.trim()) {
+      setErrorMessage("First name and last name are required.");
       return;
     }
     if (!email.trim()) {
@@ -109,9 +110,11 @@ export default function SignupPage() {
     setIsSubmitting(true);
     try {
       const result = await signup({
-        name,
+        firstName,
+        lastName,
         email,
         password,
+        confirmPassword,
         role,
         adminKey: role === "admin" ? adminKey : undefined,
       });
@@ -167,15 +170,29 @@ export default function SignupPage() {
             <CardContent>
               <form className="space-y-5" onSubmit={handleSubmit}>
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-slate-200">
-                    Full Name <span className="text-red-500">*</span>
+                  <Label htmlFor="firstName" className="text-slate-200">
+                    First name <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="name"
+                    id="firstName"
                     type="text"
-                    placeholder="Enter your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter your first name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    className="input-field"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-slate-200">
+                    Last name <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Enter your last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     required
                     className="input-field"
                   />
@@ -333,3 +350,5 @@ export default function SignupPage() {
     </div>
   );
 }
+
+
