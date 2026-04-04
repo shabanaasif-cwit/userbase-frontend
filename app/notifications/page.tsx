@@ -86,8 +86,8 @@ export default function NotificationsPage() {
   }, [user?.email, role, accessToken]);
 
   const handleReadAll = async () => {
-    if (user?.email && notifications.length > 0) {
-      const ids = notifications.filter((n) => !n.isRead).map((n) => n._id);
+    if (user?.email && unreadNotifications.length > 0) {
+      const ids = unreadNotifications.map((n) => n._id);
       if (ids.length) {
         await markNotificationsReadApi(accessToken, ids);
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -102,7 +102,7 @@ export default function NotificationsPage() {
         prev.map((n) => (n._id === item._id ? { ...n, isRead: true } : n))
       );
     }
-    setActiveNotification(item);
+    setActiveNotification({ ...item, isRead: true });
   };
 
   if (!isReady || !isAuthenticated) {
@@ -116,7 +116,8 @@ export default function NotificationsPage() {
     );
   }
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadNotifications = notifications.filter((n) => !n.isRead);
+  const unreadCount = unreadNotifications.length;
 
   return (
     <div className="min-h-full bg-zinc-950 font-sans text-white">
@@ -152,7 +153,7 @@ export default function NotificationsPage() {
                 )}
               </div>
             </div>
-            {notifications.length > 0 && (
+            {unreadNotifications.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"

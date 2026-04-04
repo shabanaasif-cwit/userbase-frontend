@@ -12,7 +12,7 @@ import {
   type StoredNotification,
   type NotificationTargetType,
 } from "@/lib/notifications-api";
-import { fetchUsersFromAPI, ROLES, useAuth } from "@/lib/auth-context";
+import { fetchUsersFromAPI, useAuth } from "@/lib/auth-context";
 import {
   Card,
   CardContent,
@@ -50,8 +50,9 @@ import {
 import { cn } from "@/lib/utils";
 
 const TARGET_OPTIONS: { value: NotificationTargetType; label: string }[] = [
-  { value: "all", label: "All users" },
-  { value: "role", label: "By role" },
+  { value: "admin", label: "Admin" },
+  { value: "user", label: "User" },
+  { value: "all", label: "All" },
   { value: "users", label: "Specific users" },
 ];
 
@@ -71,7 +72,10 @@ export default function AdminNotificationsPage() {
   const { accessToken } = useAuth();
   const [apiError, setApiError] = useState("");
   const [notifications, setNotifications] = useState<StoredNotification[]>([]);
-  const [managedUsers, setManagedUsers] = useState<{ email: string; name: string }[]>([]);
+  const [managedUsers, setManagedUsers] = useState<
+    { id: string; email: string; name: string }[]
+  >([]);
+  const [managedUsersError, setManagedUsersError] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -81,11 +85,11 @@ export default function AdminNotificationsPage() {
   const [formTitle, setFormTitle] = useState("");
   const [formMessage, setFormMessage] = useState("");
   const [formTargetType, setFormTargetType] = useState<NotificationTargetType>("all");
-  const [formTargetRole, setFormTargetRole] = useState<string>(ROLES.USER);
   const [formTargetUserIds, setFormTargetUserIds] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setApiError("");
+    setManagedUsersError("");
     const [notifRes, usersRes] = await Promise.all([
       fetchNotificationsAdmin(accessToken, { page: 1, limit: 200 }),
       fetchUsersFromAPI(accessToken),
@@ -98,10 +102,15 @@ export default function AdminNotificationsPage() {
     }
     if (usersRes.success && usersRes.data) {
       setManagedUsers(
-        usersRes.data.map((u) => ({ email: u.email, name: u.name || u.email }))
+        usersRes.data.map((u) => ({
+          id: u.id,
+          email: u.email,
+          name: u.name || u.email,
+        }))
       );
     } else {
       setManagedUsers([]);
+      setManagedUsersError(usersRes.error ?? "Failed to load users");
     }
   }, [accessToken]);
 
@@ -113,7 +122,6 @@ export default function AdminNotificationsPage() {
     setFormTitle("");
     setFormMessage("");
     setFormTargetType("all");
-    setFormTargetRole(ROLES.USER);
     setFormTargetUserIds([]);
     setEditingId(null);
   }, []);
@@ -127,7 +135,6 @@ export default function AdminNotificationsPage() {
     setFormTitle(n.title);
     setFormMessage(n.message);
     setFormTargetType(n.targetType);
-    setFormTargetRole(n.targetRole ?? ROLES.USER);
     setFormTargetUserIds(n.targetUserIds ?? []);
     setEditingId(n.id);
     setEditOpen(true);
@@ -145,7 +152,6 @@ export default function AdminNotificationsPage() {
       title: formTitle.trim(),
       message: formMessage.trim(),
       targetType: formTargetType,
-      ...(formTargetType === "role" && { targetRole: formTargetRole }),
       ...(formTargetType === "users" && { targetUserIds: formTargetUserIds }),
     };
     const res = await createNotificationApi(accessToken, payload);
@@ -165,7 +171,6 @@ export default function AdminNotificationsPage() {
       title: formTitle.trim(),
       message: formMessage.trim(),
       targetType: formTargetType,
-      ...(formTargetType === "role" && { targetRole: formTargetRole }),
       ...(formTargetType === "users" && { targetUserIds: formTargetUserIds }),
     };
     const res = await updateNotificationApi(accessToken, editingId, payload);
@@ -201,9 +206,11 @@ export default function AdminNotificationsPage() {
     await load();
   };
 
-  const toggleUserInForm = (email: string) => {
+  const toggleUserInForm = (userId: string) => {
     setFormTargetUserIds((prev) =>
-      prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email]
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
     );
   };
 
@@ -230,8 +237,7 @@ export default function AdminNotificationsPage() {
                 Manage Notifications
               </h1>
               <p className="mt-2 max-w-lg text-sm text-zinc-400">
-                Create, edit, and delete notifications. Data is stored in MongoDB via
-                your API.
+                Create, Edit, and Delete notifications. Data is stored in Database.
               </p>
               {apiError && (
                 <p className="mt-2 text-sm text-red-400">{apiError}</p>
@@ -362,11 +368,10 @@ export default function AdminNotificationsPage() {
             setFormMessage={setFormMessage}
             formTargetType={formTargetType}
             setFormTargetType={setFormTargetType}
-            formTargetRole={formTargetRole}
-            setFormTargetRole={setFormTargetRole}
             formTargetUserIds={formTargetUserIds}
             toggleUserInForm={toggleUserInForm}
             managedUsers={managedUsers}
+            managedUsersError={managedUsersError}
           />
           <DialogFooter showCloseButton className="gap-2 sm:gap-0">
             <Button
@@ -401,11 +406,10 @@ export default function AdminNotificationsPage() {
             setFormMessage={setFormMessage}
             formTargetType={formTargetType}
             setFormTargetType={setFormTargetType}
-            formTargetRole={formTargetRole}
-            setFormTargetRole={setFormTargetRole}
             formTargetUserIds={formTargetUserIds}
             toggleUserInForm={toggleUserInForm}
             managedUsers={managedUsers}
+            managedUsersError={managedUsersError}
           />
           <DialogFooter showCloseButton className="gap-2 sm:gap-0">
             <Button
@@ -471,11 +475,10 @@ function NotificationForm({
   setFormMessage,
   formTargetType,
   setFormTargetType,
-  formTargetRole,
-  setFormTargetRole,
   formTargetUserIds,
   toggleUserInForm,
   managedUsers,
+  managedUsersError,
 }: {
   formTitle: string;
   setFormTitle: (v: string) => void;
@@ -483,11 +486,10 @@ function NotificationForm({
   setFormMessage: (v: string) => void;
   formTargetType: NotificationTargetType;
   setFormTargetType: (v: NotificationTargetType) => void;
-  formTargetRole: string;
-  setFormTargetRole: (v: string) => void;
   formTargetUserIds: string[];
-  toggleUserInForm: (email: string) => void;
-  managedUsers: { email: string; name: string }[];
+  toggleUserInForm: (userId: string) => void;
+  managedUsers: { id: string; email: string; name: string }[];
+  managedUsersError: string;
 }) {
   return (
     <div className="grid gap-4 py-2">
@@ -544,37 +546,23 @@ function NotificationForm({
           ))}
         </div>
       </div>
-      {formTargetType === "role" && (
-        <div className="grid gap-2">
-          <Label htmlFor="notif-role" className="text-zinc-200">
-            Role
-          </Label>
-          <select
-            id="notif-role"
-            value={formTargetRole}
-            onChange={(e) => setFormTargetRole(e.target.value)}
-            className="h-9 w-full rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
-          >
-            <option value={ROLES.USER}>{ROLES.USER}</option>
-            <option value={ROLES.ADMIN}>{ROLES.ADMIN}</option>
-          </select>
-        </div>
-      )}
       {formTargetType === "users" && (
         <div className="grid gap-2">
           <Label className="text-zinc-200">Select users</Label>
           <div className="max-h-40 space-y-2 overflow-y-auto rounded-lg border border-white/20 bg-zinc-800/50 p-2">
-            {managedUsers.length === 0 ? (
+            {managedUsersError ? (
+              <p className="py-2 text-sm text-red-400">{managedUsersError}</p>
+            ) : managedUsers.length === 0 ? (
               <p className="py-2 text-sm text-zinc-500">No users in system yet.</p>
             ) : (
               managedUsers.map((u) => (
                 <label
-                  key={u.email}
+                  key={u.id}
                   className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-sky-500/10 hover:text-zinc-100"
                 >
                   <Checkbox
-                    checked={formTargetUserIds.includes(u.email)}
-                    onCheckedChange={() => toggleUserInForm(u.email)}
+                    checked={formTargetUserIds.includes(u.id)}
+                    onCheckedChange={() => toggleUserInForm(u.id)}
                   />
                   <span className="truncate">{u.name}</span>
                   <span className="truncate text-zinc-500">({u.email})</span>

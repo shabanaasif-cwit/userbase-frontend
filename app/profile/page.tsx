@@ -20,35 +20,43 @@ type NotificationItem = {
   isRead?: boolean;
 };
 
-function getInitials(name?: string | null, email?: string) {
-  if (name?.trim()) {
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.trim().slice(0, 2).toUpperCase();
-  }
-  if (email) {
-    return email.slice(0, 2).toUpperCase();
-  }
-  return "UM";
+function toTitleCase(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function getNameFromEmail(email?: string | null) {
+  if (!email?.trim()) return "";
+  const localPart = email.split("@")[0]?.trim();
+  if (!localPart) return "";
+  return toTitleCase(localPart.replace(/[._-]+/g, " "));
 }
 
 function getDisplayName(name?: string | null, email?: string) {
-  const toTitleCase = (value: string) =>
-    value
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
+  const emailName = getNameFromEmail(email);
+  if (emailName) return emailName;
 
   if (name?.trim()) return toTitleCase(name);
-  if (email?.trim()) {
-    const localPart = email.split("@")[0]?.trim();
-    return localPart ? toTitleCase(localPart.replace(/[._-]+/g, " ")) : "User";
-  }
   return "User";
+}
+
+function getInitials(name?: string | null, email?: string) {
+  const displayName = getDisplayName(name, email);
+  const parts = displayName.split(/\s+/).filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 1).toUpperCase();
+  }
+
+  return "U";
 }
 
 export default function ProfilePage() {
@@ -98,7 +106,8 @@ export default function ProfilePage() {
 
   const initials = getInitials(profile?.name, profile?.email);
   const displayName = getDisplayName(profile?.name, profile?.email);
-  const viewAllPath = admin ? "/admin/notifications" : "/dashboard";
+  const viewAllPath = admin ? "/admin/notifications" : "/notifications";
+  const unreadNotifications = notifications.filter((item) => !item.isRead);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(94,234,212,0.18),_transparent_55%),radial-gradient(circle_at_20%_20%,_rgba(56,189,248,0.16),_transparent_45%),linear-gradient(160deg,_#020617,_#0f172a_45%,_#020617)] font-sans text-white">
@@ -202,14 +211,12 @@ export default function ProfilePage() {
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
                     Notifications
                   </p>
-                  {notifications.length > 0 && (
+                  {unreadNotifications.length > 0 && (
                     <button
                       type="button"
                       onClick={async () => {
                         if (!user?.email) return;
-                        const ids = notifications
-                          .filter((n) => !n.isRead)
-                          .map((n) => n._id);
+                        const ids = unreadNotifications.map((n) => n._id);
                         if (ids.length) {
                           await markNotificationsReadApi(accessToken, ids);
                           setNotifications((prev) =>
@@ -223,13 +230,13 @@ export default function ProfilePage() {
                     </button>
                   )}
                 </div>
-                {notifications.length === 0 ? (
+                {unreadNotifications.length === 0 ? (
                   <p className="mt-2 text-sm text-slate-300">
                     No new notifications yet.
                   </p>
                 ) : (
                   <div className="mt-3 space-y-3">
-                    {notifications.slice(0, 3).map((item) => (
+                    {unreadNotifications.slice(0, 3).map((item) => (
                       <button
                         key={item._id}
                         type="button"
@@ -244,7 +251,7 @@ export default function ProfilePage() {
                               )
                             );
                           }
-                          setActiveNotification(item);
+                          setActiveNotification({ ...item, isRead: true });
                         }}
                         className="w-full cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-left transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
                       >
@@ -263,9 +270,9 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 )}
-                <div className="mt-4">
+                <div className="text-right mt-4">
                   <Link href={viewAllPath}>
-                    <Button variant="secondary">View all</Button>
+                    <Button className="cursor-pointer" variant="secondary">View all</Button>
                   </Link>
                 </div>
               </div>

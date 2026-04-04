@@ -8,6 +8,7 @@ import {
   fetchReminders,
   markReminderReadApi,
   type ReminderItem,
+  type ReminderListMeta,
 } from "@/lib/notifications-api";
 import {
   Card,
@@ -17,7 +18,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlarmClock, CheckCheck, LayoutDashboard } from "lucide-react";
+import {
+  AlarmClock,
+  CheckCheck,
+  ChevronLeft,
+  ChevronRight,
+  LayoutDashboard,
+  Search,
+} from "lucide-react";
 
 function formatRelative(time?: string) {
   if (!time) return "";
@@ -30,12 +38,29 @@ function formatRelative(time?: string) {
   return d.toLocaleDateString(undefined, { dateStyle: "short" });
 }
 
+const DEFAULT_PAGINATION: ReminderListMeta = {
+  page: 1,
+  limit: 10,
+  total: 0,
+  totalPages: 1,
+};
+
 export default function RemindersPage() {
   const router = useRouter();
   const { user, isAuthenticated, isReady, accessToken } = useAuth();
   const [reminders, setReminders] = useState<ReminderItem[]>([]);
+  const [pagination, setPagination] =
+    useState<ReminderListMeta>(DEFAULT_PAGINATION);
   const [loadError, setLoadError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">(
+    "all"
+  );
+  const limit = 10;
 
   useEffect(() => {
     if (!isReady) return;
@@ -44,21 +69,47 @@ export default function RemindersPage() {
     }
   }, [isReady, isAuthenticated, router]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPage(1);
+      setSearch(searchInput.trim());
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
+
   const load = useCallback(async () => {
     setLoadError("");
-    const { ok, items, error } = await fetchReminders(accessToken);
+    setIsLoading(true);
+    const { ok, items, meta, error } = await fetchReminders(accessToken, {
+      page,
+      limit,
+      search: search || undefined,
+      read:
+        readFilter === "all" ? undefined : readFilter === "read" ? true : false,
+    });
+    setIsLoading(false);
+
     if (!ok) {
       setLoadError(error ?? "Failed to load reminders");
       setReminders([]);
+      setPagination(meta);
       return;
     }
+
     setReminders(items);
-  }, [accessToken]);
+    setPagination(meta);
+  }, [accessToken, limit, page, readFilter, search]);
 
   useEffect(() => {
     if (!isReady || !isAuthenticated) return;
-    load();
+    void load();
   }, [isReady, isAuthenticated, load]);
+
+  useEffect(() => {
+    if (page <= pagination.totalPages) return;
+    setPage(pagination.totalPages);
+  }, [page, pagination.totalPages]);
 
   const handleMarkRead = async (id: string) => {
     setBusyId(id);
@@ -69,7 +120,7 @@ export default function RemindersPage() {
       return;
     }
     setReminders((prev) =>
-      prev.map((r) => (r._id === id ? { ...r, isRead: true } : r))
+      prev.map((item) => (item._id === id ? { ...item, isRead: true } : item))
     );
   };
 
@@ -85,7 +136,7 @@ export default function RemindersPage() {
       }
     }
     setBusyId(null);
-    setReminders((prev) => prev.map((r) => ({ ...r, isRead: true })));
+    await load();
   };
 
   if (!isReady || !isAuthenticated) {
@@ -100,6 +151,9 @@ export default function RemindersPage() {
   }
 
   const unreadCount = reminders.filter((r) => !r.isRead).length;
+  const hasUnreadOnPage = reminders.some((r) => !r.isRead);
+  const resultLabel =
+    pagination.total === 1 ? "1 reminder" : `${pagination.total} reminders`;
 
   return (
     <div className="min-h-full bg-zinc-950 font-sans text-white">
@@ -119,29 +173,29 @@ export default function RemindersPage() {
                   Your reminders
                 </h1>
                 <p className="mt-1.5 max-w-md text-sm leading-relaxed text-zinc-400">
-                  Items sent when an admin uses &quot;Send reminder&quot; on a
-                  notification. Mark them read when you are done.
+                  Items sent when an admin uses "Send reminder" on a
+                  notification. Search, filter, and page through them here.
                 </p>
                 {loadError && (
                   <p className="mt-2 text-sm text-red-400">{loadError}</p>
                 )}
                 {unreadCount > 0 && (
                   <span className="mt-3 inline-flex items-center rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-300 ring-1 ring-amber-500/25">
-                    {unreadCount} unread
+                    {unreadCount} unread on this page
                   </span>
                 )}
               </div>
             </div>
-            {reminders.some((r) => !r.isRead) && (
+            {hasUnreadOnPage && (
               <Button
                 variant="outline"
                 size="sm"
                 className="shrink-0 cursor-pointer border-white/10 bg-white/5 font-medium text-zinc-300 hover:border-amber-500/40 hover:bg-amber-500/15 hover:text-amber-200"
-                onClick={handleMarkAllRead}
+                onClick={() => void handleMarkAllRead()}
                 disabled={busyId !== null}
               >
                 <CheckCheck className="mr-2 h-4 w-4" />
-                Mark all read
+                Mark page read
               </Button>
             )}
           </div>
@@ -153,63 +207,132 @@ export default function RemindersPage() {
               All reminders
             </CardTitle>
             <CardDescription className="mt-0.5 text-sm text-zinc-500">
-              {reminders.length} reminder{reminders.length !== 1 ? "s" : ""}
-              {user?.email ? ` · ${user.email}` : ""}
+              {resultLabel}
+              {user?.email ? ` - ${user.email}` : ""}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
-            {reminders.length === 0 ? (
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full sm:max-w-sm">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <input
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search reminders..."
+                  className="h-10 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-500/40 focus:bg-white/10"
+                />
+              </div>
+
+              <select
+                value={readFilter}
+                onChange={(e) => {
+                  setPage(1);
+                  setReadFilter(e.target.value as "all" | "unread" | "read");
+                }}
+                className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition focus:border-amber-500/40 focus:bg-white/10"
+              >
+                <option value="all">All reminders</option>
+                <option value="unread">Unread only</option>
+                <option value="read">Read only</option>
+              </select>
+            </div>
+
+            {isLoading ? (
+              <div className="flex min-h-[220px] items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500/30 border-t-amber-400" />
+                  <p className="text-sm text-zinc-500">Loading reminders...</p>
+                </div>
+              </div>
+            ) : reminders.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.02] py-20 text-center">
                 <AlarmClock className="h-8 w-8 text-zinc-500" />
                 <p className="mt-5 text-base font-medium text-zinc-300">
-                  No reminders yet
+                  No reminders found
                 </p>
                 <p className="mt-1.5 max-w-xs text-sm text-zinc-500">
-                  When an admin sends a reminder from a notification, it will
-                  appear here.
+                  {search || readFilter !== "all"
+                    ? "Try adjusting the search or filter to see more results."
+                    : "When an admin sends a reminder from a notification, it will appear here."}
                 </p>
               </div>
             ) : (
-              <ul className="space-y-3">
-                {reminders.map((item) => (
-                  <li
-                    key={item._id}
-                    className={`rounded-xl border px-4 py-4 sm:px-5 ${
-                      item.isRead
-                        ? "border-white/[0.04] bg-white/[0.02]"
-                        : "border-l-4 border-l-amber-500/60 border-white/[0.06] bg-amber-500/[0.06]"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">
-                          {item.title || "Reminder"}
-                        </p>
-                        {item.body ? (
-                          <p className="mt-1 text-sm leading-relaxed text-zinc-400">
-                            {item.body}
+              <>
+                <ul className="space-y-3">
+                  {reminders.map((item) => (
+                    <li
+                      key={item._id}
+                      className={`rounded-xl border px-4 py-4 sm:px-5 ${
+                        item.isRead
+                          ? "border-white/[0.04] bg-white/[0.02]"
+                          : "border-l-4 border-l-amber-500/60 border-white/[0.06] bg-amber-500/[0.06]"
+                      }`}
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-white">
+                            {item.title || "Reminder"}
                           </p>
-                        ) : null}
-                        <p className="mt-2 text-xs text-zinc-500">
-                          {formatRelative(item.createdAt)}
-                        </p>
+                          {item.body ? (
+                            <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+                              {item.body}
+                            </p>
+                          ) : null}
+                          <p className="mt-2 text-xs text-zinc-500">
+                            {formatRelative(item.createdAt)}
+                          </p>
+                        </div>
+                        {!item.isRead && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            className="shrink-0 cursor-pointer"
+                            disabled={busyId === item._id}
+                            onClick={() => void handleMarkRead(item._id)}
+                          >
+                            {busyId === item._id ? "Saving..." : "Mark read"}
+                          </Button>
+                        )}
                       </div>
-                      {!item.isRead && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          className="shrink-0 cursor-pointer"
-                          disabled={busyId === item._id}
-                          onClick={() => handleMarkRead(item._id)}
-                        >
-                          {busyId === item._id ? "Saving…" : "Mark read"}
-                        </Button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-6 flex flex-col gap-3 border-t border-white/[0.06] pt-4 text-sm text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+                  <p>
+                    Page {pagination.page} of {pagination.totalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="cursor-pointer border-white/10 bg-white/5 text-zinc-300 hover:border-white/20 hover:bg-white/10"
+                      disabled={page <= 1 || isLoading}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <ChevronLeft className="mr-1 h-4 w-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="cursor-pointer border-white/10 bg-white/5 text-zinc-300 hover:border-white/20 hover:bg-white/10"
+                      disabled={page >= pagination.totalPages || isLoading}
+                      onClick={() =>
+                        setPage((current) =>
+                          Math.min(pagination.totalPages, current + 1)
+                        )
+                      }
+                    >
+                      Next
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

@@ -4,14 +4,13 @@
 
 import { API_BASE, authHeaders, readJsonSafe } from "./api-config";
 
-export type NotificationTargetType = "all" | "role" | "users";
+export type NotificationTargetType = "admin" | "user" | "all" | "users";
 
 export type StoredNotification = {
   id: string;
   title: string;
   message: string;
   targetType: NotificationTargetType;
-  targetRole?: string;
   targetUserIds?: string[];
   createdAt: string;
   updatedAt?: string;
@@ -45,21 +44,23 @@ function mapApiToStored(raw: Record<string, unknown>): StoredNotification | null
   if (!id) return null;
   const targetType = (raw.targetType as string)?.toLowerCase();
   const tt: NotificationTargetType =
-    targetType === "role"
-      ? "role"
-      : targetType === "users"
-        ? "users"
-        : "all";
+    targetType === "admin"
+      ? "admin"
+      : targetType === "user"
+        ? "user"
+        : targetType === "users"
+          ? "users"
+          : "all";
   return {
     id,
     title: String(raw.title ?? ""),
     message: textFromApi(raw),
     targetType: tt,
-    targetRole:
-      typeof raw.targetRole === "string" ? raw.targetRole : undefined,
-    targetUserIds: Array.isArray(raw.targetUserIds)
-      ? (raw.targetUserIds as string[])
-      : undefined,
+    targetUserIds: Array.isArray(raw.targetUsers)
+      ? (raw.targetUsers as string[])
+      : Array.isArray(raw.targetUserIds)
+        ? (raw.targetUserIds as string[])
+        : undefined,
     createdAt:
       typeof raw.createdAt === "string"
         ? raw.createdAt
@@ -199,10 +200,11 @@ function toNotificationApiBody(
     title: input.title,
     body: input.message,
     targetType: input.targetType,
-    ...(input.targetType === "role" &&
-      input.targetRole && { targetRole: input.targetRole }),
     ...(input.targetType === "users" &&
-      input.targetUserIds?.length && { targetUserIds: input.targetUserIds }),
+      input.targetUserIds?.length && {
+        targetUsers: input.targetUserIds,
+        targetUserIds: input.targetUserIds,
+      }),
   };
 }
 
@@ -213,9 +215,10 @@ function toNotificationPatchBody(
   if (input.title !== undefined) out.title = input.title;
   if (input.message !== undefined) out.body = input.message;
   if (input.targetType !== undefined) out.targetType = input.targetType;
-  if (input.targetRole !== undefined) out.targetRole = input.targetRole;
-  if (input.targetUserIds !== undefined)
+  if (input.targetUserIds !== undefined) {
+    out.targetUsers = input.targetUserIds;
     out.targetUserIds = input.targetUserIds;
+  }
   return out;
 }
 
@@ -377,6 +380,20 @@ export type ReminderItem = {
   createdAt?: string;
 };
 
+export type ReminderListParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  read?: boolean;
+};
+
+export type ReminderListMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
 function mapReminderRow(row: unknown): ReminderItem | null {
   if (!row || typeof row !== "object") return null;
   const r = row as Record<string, unknown>;
@@ -391,12 +408,91 @@ function mapReminderRow(row: unknown): ReminderItem | null {
   };
 }
 
+function numberFromUnknown(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function extractReminderMeta(
+  json: Record<string, unknown> | null,
+  fallbackPage: number,
+  fallbackLimit: number,
+  itemCount: number
+): ReminderListMeta {
+  const sources = [json];
+
+  if (json?.pagination && typeof json.pagination === "object") {
+    sources.push(json.pagination as Record<string, unknown>);
+  }
+
+  if (json?.meta && typeof json.meta === "object") {
+    sources.push(json.meta as Record<string, unknown>);
+  }
+
+  let page = fallbackPage;
+  let limit = fallbackLimit;
+  let total = itemCount;
+  let totalPages = 1;
+
+  for (const source of sources) {
+    if (!source) continue;
+    page =
+      numberFromUnknown(source.page) ??
+      numberFromUnknown(source.currentPage) ??
+      page;
+    limit =
+      numberFromUnknown(source.limit) ??
+      numberFromUnknown(source.pageSize) ??
+      limit;
+    total =
+      numberFromUnknown(source.total) ??
+      numberFromUnknown(source.count) ??
+      numberFromUnknown(source.totalItems) ??
+      total;
+    totalPages =
+      numberFromUnknown(source.totalPages) ??
+      numberFromUnknown(source.pages) ??
+      totalPages;
+  }
+
+  const safeLimit = Math.max(1, limit);
+  const normalizedTotal =
+    totalPages > 1 ? Math.max(total, itemCount) : Math.max(total, itemCount);
+
+  return {
+    page: Math.max(1, page),
+    limit: safeLimit,
+    total: normalizedTotal,
+    totalPages: Math.max(1, totalPages, Math.ceil(normalizedTotal / safeLimit)),
+  };
+}
+
 /** GET /api/reminders */
 export async function fetchReminders(
-  accessToken: string | null
-): Promise<{ ok: boolean; items: ReminderItem[]; error?: string }> {
+  accessToken: string | null,
+  params?: ReminderListParams
+): Promise<{
+  ok: boolean;
+  items: ReminderItem[];
+  meta: ReminderListMeta;
+  error?: string;
+}> {
+  const page = Math.max(params?.page ?? 1, 1);
+  const limit = Math.min(Math.max(params?.limit ?? 10, 1), 100);
   try {
-    const res = await fetch(`${API_BASE}/api/reminders`, {
+    const q = new URLSearchParams();
+    q.set("page", String(page));
+    q.set("limit", String(limit));
+    if (params?.search?.trim()) q.set("search", params.search.trim());
+    if (params?.read !== undefined) {
+      q.set("read", params.read ? "true" : "false");
+    }
+
+    const res = await fetch(`${API_BASE}/api/reminders?${q.toString()}`, {
       method: "GET",
       headers: authHeaders(accessToken),
       credentials: "include",
@@ -406,6 +502,7 @@ export async function fetchReminders(
       return {
         ok: false,
         items: [],
+        meta: { page, limit, total: 0, totalPages: 1 },
         error: err?.message ?? err?.error ?? "Failed to load reminders",
       };
     }
@@ -421,9 +518,18 @@ export async function fetchReminders(
         new Date(b.createdAt ?? 0).getTime() -
         new Date(a.createdAt ?? 0).getTime()
     );
-    return { ok: true, items };
+    return {
+      ok: true,
+      items,
+      meta: extractReminderMeta(json, page, limit, items.length),
+    };
   } catch {
-    return { ok: false, items: [], error: "Reminders request failed" };
+    return {
+      ok: false,
+      items: [],
+      meta: { page, limit, total: 0, totalPages: 1 },
+      error: "Reminders request failed",
+    };
   }
 }
 
@@ -456,12 +562,12 @@ export async function markReminderReadApi(
 
 export function getTargetSummary(notification: StoredNotification): string {
   switch (notification.targetType) {
+    case "admin":
+      return "Admins";
+    case "user":
+      return "Users";
     case "all":
-      return "All users";
-    case "role":
-      return notification.targetRole
-        ? `Role: ${notification.targetRole}`
-        : "Role (not set)";
+      return "All";
     case "users": {
       const count = notification.targetUserIds?.length ?? 0;
       return count ? `${count} user(s)` : "No users selected";

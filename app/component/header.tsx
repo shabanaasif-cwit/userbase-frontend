@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -42,6 +42,29 @@ const Header: FC<HeaderProps> = ({
   const [activeNotification, setActiveNotification] =
     useState<NotificationItem | null>(null);
 
+  const loadNotifications = useCallback(async () => {
+    if (!isAuthenticated || !userEmail) {
+      setNotifications([]);
+      setIsLoadingNotifications(false);
+      setNotificationError("");
+      return;
+    }
+
+    setIsLoadingNotifications(true);
+    setNotificationError("");
+    const { ok, items, error } = await fetchNotificationsForUser(
+      accessToken,
+      { page: 1, limit: 30 }
+    );
+    setIsLoadingNotifications(false);
+    if (!ok) {
+      setNotificationError(error ?? "Could not load notifications");
+      setNotifications([]);
+      return;
+    }
+    setNotifications(items);
+  }, [accessToken, isAuthenticated, userEmail]);
+
   const handleLogout = () => {
     onLogout();
     router.push("/login");
@@ -64,31 +87,20 @@ const Header: FC<HeaderProps> = ({
   };
 
   useEffect(() => {
-    if (!isAuthenticated || !userEmail) {
-      setNotifications([]);
-      return;
-    }
     let cancelled = false;
-    setIsLoadingNotifications(true);
-    setNotificationError("");
     (async () => {
-      const { ok, items, error } = await fetchNotificationsForUser(
-        accessToken,
-        { page: 1, limit: 30 }
-      );
       if (cancelled) return;
-      setIsLoadingNotifications(false);
-      if (!ok) {
-        setNotificationError(error ?? "Could not load notifications");
-        setNotifications([]);
-        return;
-      }
-      setNotifications(items);
+      await loadNotifications();
     })();
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, userEmail, role, accessToken]);
+  }, [loadNotifications, role]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !userEmail) return;
+    void loadNotifications();
+  }, [isAuthenticated, isNotificationsOpen, loadNotifications, pathname, userEmail]);
 
   useEffect(() => {
     const titleByPath: Record<string, string> = {
@@ -117,7 +129,8 @@ const Header: FC<HeaderProps> = ({
   const mobileNavItemClass =
     "inline-flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white transition hover:border-white/20 hover:bg-white/10";
 
-  const notificationCount = notifications.filter((item) => !item.isRead).length;
+  const unreadNotifications = notifications.filter((item) => !item.isRead);
+  const notificationCount = unreadNotifications.length;
   const viewAllPath = role === "admin" ? "/admin/notifications" : "/notifications";
   const displayCount = useMemo(() => {
     if (notificationCount <= 0) return "0";
@@ -134,12 +147,12 @@ const Header: FC<HeaderProps> = ({
         )
       );
     }
-    setActiveNotification(item);
+    setActiveNotification({ ...item, isRead: true });
   };
 
   const handleReadAll = async () => {
-    if (userEmail && notifications.length > 0) {
-      const ids = notifications.filter((n) => !n.isRead).map((n) => n._id);
+    if (userEmail && unreadNotifications.length > 0) {
+      const ids = unreadNotifications.map((n) => n._id);
       if (ids.length) {
         await markNotificationsReadApi(accessToken, ids);
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -300,7 +313,7 @@ const Header: FC<HeaderProps> = ({
                           Notifications
                         </p>
                         <div className="flex items-center gap-3">
-                          {notifications.length > 0 && (
+                          {unreadNotifications.length > 0 && (
                             <button
                               type="button"
                               onClick={handleReadAll}
@@ -334,7 +347,7 @@ const Header: FC<HeaderProps> = ({
                             No new notifications.
                           </p>
                         ) : (
-                          notifications.slice(0, 3).map((item) => (
+                          unreadNotifications.slice(0, 3).map((item) => (
                             <button
                               key={item._id}
                               type="button"
@@ -577,7 +590,7 @@ const Header: FC<HeaderProps> = ({
                         <div className="flex items-center justify-between gap-2 pb-2">
                           <span className="text-slate-400">Notifications</span>
                           <div className="flex items-center gap-3">
-                            {notifications.length > 0 && (
+                            {unreadNotifications.length > 0 && (
                               <button
                                 type="button"
                                 onClick={handleReadAll}
@@ -604,7 +617,7 @@ const Header: FC<HeaderProps> = ({
                           <p className="text-slate-300">No new notifications.</p>
                         ) : (
                           <div className="space-y-3">
-                            {notifications.slice(0, 3).map((item) => (
+                            {unreadNotifications.slice(0, 3).map((item) => (
                               <button
                                 key={item._id}
                                 type="button"
