@@ -4,7 +4,10 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { fetchNotificationsForUser } from "@/lib/notifications-api"
+import {
+  fetchNotificationsForUser,
+  markNotificationsReadApi,
+} from "@/lib/notifications-api"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
 import {
@@ -101,6 +104,11 @@ export default function DashboardPage() {
     ) || null
   }, [notifications, dismissedNotificationIds])
 
+  const unreadNotifications = useMemo(
+    () => notifications.filter((item) => !item.isRead),
+    [notifications]
+  )
+
   useEffect(() => {
     if (!isReady) return
     if (!isAuthenticated) {
@@ -111,6 +119,16 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!activeNotification) return
     const timer = window.setTimeout(() => {
+      void (async () => {
+        await markNotificationsReadApi(accessToken, [activeNotification._id])
+        setNotifications((prev) =>
+          prev.map((item) =>
+            item._id === activeNotification._id
+              ? { ...item, isRead: true }
+              : item
+          )
+        )
+      })()
       setDismissedNotificationIds((prev) =>
         prev.includes(activeNotification._id)
           ? prev
@@ -119,7 +137,7 @@ export default function DashboardPage() {
     }, 5000)
 
     return () => window.clearTimeout(timer)
-  }, [activeNotification])
+  }, [accessToken, activeNotification])
 
   if (!isReady || !isAuthenticated) {
     return (
@@ -324,10 +342,10 @@ export default function DashboardPage() {
             <CardContent className="space-y-4 text-sm text-zinc-200">
               {isLoadingNotifications ? (
                 <p className="text-zinc-300">Loading updates...</p>
-              ) : notifications.length === 0 ? (
+              ) : unreadNotifications.length === 0 ? (
                 <p className="text-zinc-300">No notifications available.</p>
               ) : (
-                notifications.slice(0, 5).map((item) => (
+                unreadNotifications.slice(0, 5).map((item) => (
                   <div
                     key={item._id}
                     className="rounded-2xl border border-white/10 bg-black/30 p-4"

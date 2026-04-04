@@ -56,6 +56,8 @@ export default function AdminUsersPage() {
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
   const [editRole, setEditRole] = useState("");
   const [editStatus, setEditStatus] = useState<"active" | "deactivated">("active");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [statusUpdatingEmail, setStatusUpdatingEmail] = useState<string | null>(null);
 
   const loadUsers = useCallback(async () => {
     setListError("");
@@ -107,46 +109,63 @@ export default function AdminUsersPage() {
   const closeEdit = () => {
     setEditOpen(false);
     setEditingUser(null);
+    setEditRole("");
+    setEditStatus("active");
+    setSavingEdit(false);
   };
 
   const handleSaveEdit = async () => {
-    if (!editingUser) return;
+    if (!editingUser || savingEdit) return;
+    const userIdentifier = editingUser.id || editingUser.email;
     setActionError("");
-    if (editRole !== editingUser.role) {
-      const r = await updateUserRoleAPI(
-        accessToken,
-        editingUser.email,
-        editRole
-      );
-      if (!r.success) {
-        setActionError(r.error ?? "Role update failed");
-        return;
+    setSavingEdit(true);
+    try {
+      if (editRole !== editingUser.role) {
+        const r = await updateUserRoleAPI(
+          accessToken,
+          userIdentifier,
+          editRole
+        );
+        if (!r.success) {
+          setActionError(r.error ?? "Role update failed");
+          return;
+        }
       }
+
+      if (editStatus !== editingUser.status) {
+        const s = await updateUserStatusAPI(
+          accessToken,
+          userIdentifier,
+          editStatus
+        );
+        if (!s.success) {
+          setActionError(s.error ?? "Status update failed");
+          return;
+        }
+      }
+      await loadUsers();
+      closeEdit();
+    } finally {
+      setSavingEdit(false);
     }
-    if (editStatus !== editingUser.status) {
-      const s = await updateUserStatusAPI(
-        accessToken,
-        editingUser.email,
-        editStatus
-      );
+  };
+
+  const handleToggleStatus = async (u: ManagedUser) => {
+    if (statusUpdatingEmail === u.email) return;
+    const userIdentifier = u.id || u.email;
+    setActionError("");
+    const next = u.status === "active" ? "deactivated" : "active";
+    setStatusUpdatingEmail(u.email);
+    try {
+      const s = await updateUserStatusAPI(accessToken, userIdentifier, next);
       if (!s.success) {
         setActionError(s.error ?? "Status update failed");
         return;
       }
+      await loadUsers();
+    } finally {
+      setStatusUpdatingEmail(null);
     }
-    await loadUsers();
-    closeEdit();
-  };
-
-  const handleToggleStatus = async (u: ManagedUser) => {
-    setActionError("");
-    const next = u.status === "active" ? "deactivated" : "active";
-    const s = await updateUserStatusAPI(accessToken, u.email, next);
-    if (!s.success) {
-      setActionError(s.error ?? "Status update failed");
-      return;
-    }
-    await loadUsers();
   };
 
   return (
@@ -296,6 +315,8 @@ export default function AdminUsersPage() {
                               size="sm"
                               className="cursor-pointer text-sky-400 hover:bg-sky-500/15 hover:text-sky-300"
                               onClick={() => openEdit(user)}
+                              title={`Edit ${user.email}`}
+                              aria-label={`Edit ${user.email}`}
                             >
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">Edit</span>
@@ -303,12 +324,23 @@ export default function AdminUsersPage() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              disabled={statusUpdatingEmail === user.email}
                               className={cn(
                                 user.status === "active"
-                                  ? "cursor-pointer text-amber-400 hover:bg-amber-500/15 hover:text-amber-300"
-                                  : "cursor-pointer text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300"
+                                  ? "cursor-pointer text-amber-400 hover:bg-amber-500/15 hover:text-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                                  : "cursor-pointer text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
                               )}
                               onClick={() => handleToggleStatus(user)}
+                              title={
+                                user.status === "active"
+                                  ? `Deactivate ${user.email}`
+                                  : `Activate ${user.email}`
+                              }
+                              aria-label={
+                                user.status === "active"
+                                  ? `Deactivate ${user.email}`
+                                  : `Activate ${user.email}`
+                              }
                             >
                               {user.status === "active" ? (
                                 <>
@@ -393,7 +425,16 @@ export default function AdminUsersPage() {
       </main>
 
       {/* Edit dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog
+        open={editOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            setEditOpen(true);
+            return;
+          }
+          closeEdit();
+        }}
+      >
         <DialogContent className="overflow-hidden border-emerald-500/30 bg-zinc-900 text-white shadow-2xl shadow-emerald-500/10 sm:max-w-sm">
           <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
           <DialogHeader>
@@ -453,8 +494,9 @@ export default function AdminUsersPage() {
             <Button
               className="cursor-pointer bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-400"
               onClick={handleSaveEdit}
+              disabled={savingEdit}
             >
-              Save
+              {savingEdit ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -11,6 +11,7 @@ import {
 import { API_BASE, authHeaders, readJsonSafe } from "./api-config";
 
 export type ManagedUser = {
+  id: string;
   email: string;
   name: string;
   role: string;
@@ -18,6 +19,53 @@ export type ManagedUser = {
 };
 
 type ErrorResponse = { message?: string; error?: string };
+
+function extractUsersList(json: Record<string, unknown> | null): Record<string, unknown>[] {
+  if (!json) return [];
+
+  const candidates: unknown[] = [
+    json.users,
+    json.items,
+    json.results,
+    json.docs,
+    json.data,
+  ];
+
+  if (Array.isArray(json)) {
+    return json.filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object"
+    );
+  }
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate.filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === "object"
+      );
+    }
+
+    if (candidate && typeof candidate === "object") {
+      const nested = candidate as Record<string, unknown>;
+      const nestedList =
+        nested.users ??
+        nested.items ??
+        nested.results ??
+        nested.docs ??
+        nested.data;
+
+      if (Array.isArray(nestedList)) {
+        return nestedList.filter(
+          (item): item is Record<string, unknown> =>
+            Boolean(item) && typeof item === "object"
+        );
+      }
+    }
+  }
+
+  return [];
+}
 
 export async function fetchUsersFromAPI(
   accessToken: string | null
@@ -39,24 +87,28 @@ export async function fetchUsersFromAPI(
       return { success: false, error: msg };
     }
 
-    //try to extract the users from the response even if th response shapeis slightly different
+    // Try to extract users even if the backend wraps paginated results.
     const json = await readJsonSafe<Record<string, unknown>>(res);
-    const raw = json?.users ?? json?.data ?? json;
-    const users = Array.isArray(raw) ? raw : [];
+    const users = extractUsersList(json);
 
-    const managedUsers: ManagedUser[] = users.map((u: Record<string, unknown>) => ({
-      email: String(u.email ?? ""),
-      name:
-        u.firstName || u.lastName
-          ? `${String(u.firstName ?? "").trim()} ${String(u.lastName ?? "").trim()}`.trim()
-          : String(u.name ?? u.email ?? ""),
-      role:
-        String(u.role ?? "").toLowerCase() === ROLES.ADMIN
-          ? ROLES.ADMIN
-          : ROLES.USER,
-      status:
-        u.status === "deactivated" ? "deactivated" : "active",
-    }));
+    const managedUsers: ManagedUser[] = users
+      .map((u) => ({
+        id: String(u._id ?? u.id ?? "").trim(),
+        email: String(u.email ?? "").trim().toLowerCase(),
+        name:
+          u.firstName || u.lastName
+            ? `${String(u.firstName ?? "").trim()} ${String(u.lastName ?? "").trim()}`.trim()
+            : String(u.name ?? u.email ?? "").trim(),
+        role:
+          String(u.role ?? "").toLowerCase() === ROLES.ADMIN
+            ? ROLES.ADMIN
+            : ROLES.USER,
+        status:
+          u.status === "deactivated"
+            ? ("deactivated" as const)
+            : ("active" as const),
+      }))
+      .filter((u) => u.id && u.email);
 
     return { success: true, data: managedUsers };
   } catch (e) {
@@ -70,16 +122,16 @@ export async function fetchUsersFromAPI(
 
 export async function updateUserRoleAPI(
   accessToken: string | null,
-  userEmail: string,
+  userIdentifier: string,
   newRole: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!userEmail?.trim() || !newRole?.trim()) {
-      return { success: false, error: "Email and role are required" };
+    if (!userIdentifier?.trim() || !newRole?.trim()) {
+      return { success: false, error: "User identifier and role are required" };
     }
 
     const res = await fetch(
-      `${API_BASE}/api/users/${encodeURIComponent(userEmail.trim())}/role`,
+      `${API_BASE}/api/users/${encodeURIComponent(userIdentifier.trim())}/role`,
       {
         method: "PATCH",
         headers: authHeaders(accessToken),
@@ -105,16 +157,16 @@ export async function updateUserRoleAPI(
 
 export async function updateUserStatusAPI(
   accessToken: string | null,
-  userEmail: string,
+  userIdentifier: string,
   status: "active" | "deactivated"
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!userEmail?.trim() || !status) {
-      return { success: false, error: "Email and status are required" };
+    if (!userIdentifier?.trim() || !status) {
+      return { success: false, error: "User identifier and status are required" };
     }
 
     const res = await fetch(
-      `${API_BASE}/api/users/${encodeURIComponent(userEmail.trim())}/status`,
+      `${API_BASE}/api/users/${encodeURIComponent(userIdentifier.trim())}/status`,
       {
         method: "PATCH",
         headers: authHeaders(accessToken),
