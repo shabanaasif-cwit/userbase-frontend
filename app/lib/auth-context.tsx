@@ -188,11 +188,16 @@ export async function updateUserRoleAPI(
 }
 
 /**
- * Persist account status: update the user record in the DB, then use action routes if needed.
- * 1) `PATCH /api/users/{userId}` with `{ status }` (typical Mongo / REST partial update)
- * 2) If that route does not accept status (404/405), fall back to:
+ * Persist account status (same intent as role updates from admin).
+ * 1) Prefer dedicated routes that flip account state in the DB:
  *    - `PATCH .../deactivate` for deactivated
  *    - `PATCH .../toggle-account` for active
+ * 2) If those fail (missing route, method, etc.), fall back to
+ *    `PATCH /api/users/{userId}` with `{ status, isActive }` so backends that
+ *    only store booleans or accept partial user docs still persist.
+ *
+ * Note: Calling PATCH with `{ status }` alone can return 200 while the server
+ * ignores unknown fields, which made the UI look saved without a DB write.
  */
 export async function updateUserStatusAPI(
   accessToken: string | null,
@@ -206,36 +211,45 @@ export async function updateUserStatusAPI(
 
     const id = encodeURIComponent(userIdentifier.trim());
     const baseUrl = `${API_BASE}/api/users/${id}`;
+    const actionUrl =
+      status === "deactivated"
+        ? `${baseUrl}/deactivate`
+        : `${baseUrl}/toggle-account`;
 
-    let res = await fetch(baseUrl, {
+    let res = await fetch(actionUrl, {
       method: "PATCH",
       headers: authHeaders(accessToken),
       credentials: "include",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({}),
     });
 
     if (res.ok) {
       return { success: true };
     }
 
-    if (res.status === 404 || res.status === 405) {
-      const actionUrl =
-        status === "deactivated"
-          ? `${baseUrl}/deactivate`
-          : `${baseUrl}/toggle-account`;
-      res = await fetch(actionUrl, {
-        method: "PATCH",
-        headers: authHeaders(accessToken),
-        credentials: "include",
-        body: JSON.stringify({}),
-      });
-    }
+    const actionErr = await readJsonSafe<ErrorResponse>(res);
+    const actionMsg =
+      actionErr?.message ?? actionErr?.error ?? `HTTP ${res.status}`;
+
+    res = await fetch(baseUrl, {
+      method: "PATCH",
+      headers: authHeaders(accessToken),
+      credentials: "include",
+      body: JSON.stringify({
+        status,
+        isActive: status === "active",
+      }),
+    });
 
     if (!res.ok) {
       const err = await readJsonSafe<ErrorResponse>(res);
       return {
         success: false,
-        error: err?.message ?? err?.error ?? "Failed to update user status",
+        error:
+          err?.message ??
+          err?.error ??
+          actionMsg ??
+          "Failed to update user status",
       };
     }
 
