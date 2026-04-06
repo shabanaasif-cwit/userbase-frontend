@@ -29,22 +29,29 @@ function toTitleCase(value: string) {
     .join(" ");
 }
 
+/** Label from the email local part; never returns "" when the address has a non-empty local part. */
 function getNameFromEmail(email?: string | null) {
-  if (!email?.trim()) return "";
-  const localPart = email.split("@")[0]?.trim();
+  const trimmed = email?.trim();
+  if (!trimmed) return "";
+  const at = trimmed.indexOf("@");
+  const localPart =
+    at >= 0 ? trimmed.slice(0, at).trim() : trimmed;
   if (!localPart) return "";
-  return toTitleCase(localPart.replace(/[._-]+/g, " "));
+  const spaced = localPart.replace(/[._-]+/g, " ").trim();
+  const fromSpaced = spaced ? toTitleCase(spaced) : "";
+  if (fromSpaced) return fromSpaced;
+  return toTitleCase(localPart);
 }
 
-function getDisplayName(name?: string | null, email?: string) {
-  const emailName = getNameFromEmail(email);
-  if (emailName) return emailName;
+function getDisplayName(name?: string | null, email?: string | null) {
+  if (name?.trim()) return toTitleCase(name.trim());
 
-  if (name?.trim()) return toTitleCase(name);
+  const fromEmail = getNameFromEmail(email);
+  if (fromEmail) return fromEmail;
   return "User";
 }
 
-function getInitials(name?: string | null, email?: string) {
+function getInitials(name?: string | null, email?: string | null) {
   const displayName = getDisplayName(name, email);
   const parts = displayName.split(/\s+/).filter(Boolean);
 
