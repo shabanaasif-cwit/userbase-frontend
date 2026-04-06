@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
+  mergeWithPersistedReadState,
+  persistReadNotificationIds,
+} from "@/lib/notification-read-persistence";
+import {
   fetchNotificationsForUser,
   markNotificationsReadApi,
 } from "@/lib/notifications-api";
@@ -78,7 +82,7 @@ export default function NotificationsPage() {
         setNotifications([]);
         return;
       }
-      setNotifications(items);
+      setNotifications(mergeWithPersistedReadState(items, user.email));
     })();
     return () => {
       cancelled = true;
@@ -90,6 +94,7 @@ export default function NotificationsPage() {
       const ids = unreadNotifications.map((n) => n._id);
       if (ids.length) {
         await markNotificationsReadApi(accessToken, ids);
+        persistReadNotificationIds(user.email, ids);
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       }
     }
@@ -98,6 +103,7 @@ export default function NotificationsPage() {
   const handleOpenNotification = async (item: NotificationItem) => {
     if (user?.email && !item.isRead) {
       await markNotificationsReadApi(accessToken, [item._id]);
+      persistReadNotificationIds(user.email, [item._id]);
       setNotifications((prev) =>
         prev.map((n) => (n._id === item._id ? { ...n, isRead: true } : n))
       );

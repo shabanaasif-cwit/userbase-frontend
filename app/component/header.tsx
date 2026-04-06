@@ -4,6 +4,10 @@ import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  mergeWithPersistedReadState,
+  persistReadNotificationIds,
+} from "@/lib/notification-read-persistence";
+import {
   fetchNotificationsForUser,
   markNotificationsReadApi,
 } from "@/lib/notifications-api";
@@ -62,7 +66,7 @@ const Header: FC<HeaderProps> = ({
       setNotifications([]);
       return;
     }
-    setNotifications(items);
+    setNotifications(mergeWithPersistedReadState(items, userEmail));
   }, [accessToken, isAuthenticated, userEmail]);
 
   const handleLogout = () => {
@@ -141,6 +145,7 @@ const Header: FC<HeaderProps> = ({
   const handleOpenNotification = async (item: NotificationItem) => {
     if (userEmail && !item.isRead) {
       await markNotificationsReadApi(accessToken, [item._id]);
+      persistReadNotificationIds(userEmail, [item._id]);
       setNotifications((prev) =>
         prev.map((n) =>
           n._id === item._id ? { ...n, isRead: true } : n
@@ -155,6 +160,7 @@ const Header: FC<HeaderProps> = ({
       const ids = unreadNotifications.map((n) => n._id);
       if (ids.length) {
         await markNotificationsReadApi(accessToken, ids);
+        persistReadNotificationIds(userEmail, ids);
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       }
     }
