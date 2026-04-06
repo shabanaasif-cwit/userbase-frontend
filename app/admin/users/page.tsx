@@ -226,24 +226,26 @@ export default function AdminUsersPage() {
                 />
               </div>
               <select
+                data-native-dark
                 value={roleFilter}
                 onChange={(e) => {
                   setRoleFilter(e.target.value);
                   setPage(1);
                 }}
-                className="h-9 rounded-lg border border-white/20 bg-zinc-800/80 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
+                className="h-9 min-w-[9.5rem] rounded-lg border border-white/20 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
               >
                 <option value="all">All roles</option>
                 <option value={ROLES.USER}>User</option>
                 <option value={ROLES.ADMIN}>Admin</option>
               </select>
               <select
+                data-native-dark
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
                   setPage(1);
                 }}
-                className="h-9 rounded-lg border border-white/20 bg-zinc-800/80 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
+                className="h-9 min-w-[11rem] rounded-lg border border-white/20 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
               >
                 <option value="all">All statuses</option>
                 <option value="active">Active</option>
@@ -275,7 +277,7 @@ export default function AdminUsersPage() {
                   ) : (
                     paginated.map((user) => (
                       <TableRow
-                        key={user.email}
+                        key={user.id || user.email}
                         className="border-white/[0.06] transition-colors hover:bg-emerald-500/5"
                       >
                         <TableCell className="font-medium text-white">
@@ -311,10 +313,14 @@ export default function AdminUsersPage() {
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
+                              type="button"
                               variant="ghost"
                               size="sm"
-                              className="cursor-pointer text-sky-400 hover:bg-sky-500/15 hover:text-sky-300"
-                              onClick={() => openEdit(user)}
+                              className="relative z-10 cursor-pointer text-sky-400 hover:bg-sky-500/15 hover:text-sky-300 [&_svg]:pointer-events-auto"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEdit(user);
+                              }}
                               title={`Edit ${user.email}`}
                               aria-label={`Edit ${user.email}`}
                             >
@@ -322,15 +328,20 @@ export default function AdminUsersPage() {
                               <span className="sr-only">Edit</span>
                             </Button>
                             <Button
+                              type="button"
                               variant="ghost"
                               size="sm"
                               disabled={statusUpdatingEmail === user.email}
                               className={cn(
+                                "relative z-10 [&_svg]:pointer-events-auto",
                                 user.status === "active"
                                   ? "cursor-pointer text-amber-400 hover:bg-amber-500/15 hover:text-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
                                   : "cursor-pointer text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
                               )}
-                              onClick={() => handleToggleStatus(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void handleToggleStatus(user);
+                              }}
                               title={
                                 user.status === "active"
                                   ? `Deactivate ${user.email}`
@@ -485,6 +496,7 @@ export default function AdminUsersPage() {
           )}
           <DialogFooter showCloseButton className="gap-2 sm:gap-0">
             <Button
+              type="button"
               variant="outline"
               className="cursor-pointer border-white/20 text-zinc-300 hover:bg-white/10"
               onClick={closeEdit}
@@ -492,8 +504,9 @@ export default function AdminUsersPage() {
               Cancel
             </Button>
             <Button
+              type="button"
               className="cursor-pointer bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-400"
-              onClick={handleSaveEdit}
+              onClick={() => void handleSaveEdit()}
               disabled={savingEdit}
             >
               {savingEdit ? "Saving..." : "Save"}

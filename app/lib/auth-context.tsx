@@ -20,6 +20,40 @@ export type ManagedUser = {
 
 type ErrorResponse = { message?: string; error?: string };
 
+function normalizeUserId(raw: unknown): string {
+  if (raw == null) return "";
+  if (typeof raw === "string") return raw.trim();
+  if (typeof raw === "object" && raw !== null) {
+    const o = raw as Record<string, unknown>;
+    if (typeof o.$oid === "string") return o.$oid.trim();
+  }
+  const s = String(raw);
+  return s === "[object Object]" ? "" : s.trim();
+}
+
+/** Map API / DB user shapes to `active` | `deactivated` for the admin UI. */
+function deriveUserStatus(u: Record<string, unknown>): "active" | "deactivated" {
+  const raw = u.status;
+  if (typeof raw === "string") {
+    const v = raw.toLowerCase();
+    if (v === "deactivated" || v === "inactive" || v === "disabled" || v === "banned") {
+      return "deactivated";
+    }
+    if (v === "active" || v === "enabled") {
+      return "active";
+    }
+  }
+  if (typeof u.accountStatus === "string") {
+    const v = u.accountStatus.toLowerCase();
+    if (v === "deactivated" || v === "inactive" || v === "disabled") {
+      return "deactivated";
+    }
+  }
+  if (u.isActive === false || u.active === false) return "deactivated";
+  if (u.deactivated === true || u.isDeactivated === true) return "deactivated";
+  return "active";
+}
+
 function extractUsersList(json: Record<string, unknown> | null): Record<string, unknown>[] {
   if (!json) return [];
 
@@ -93,7 +127,9 @@ export async function fetchUsersFromAPI(
 
     const managedUsers: ManagedUser[] = users
       .map((u) => ({
-        id: String(u._id ?? u.id ?? "").trim(),
+        id: normalizeUserId(
+          u._id ?? u.id ?? u.userId ?? (typeof u.user_id === "string" ? u.user_id : undefined)
+        ),
         email: String(u.email ?? "").trim().toLowerCase(),
         name:
           u.firstName || u.lastName
@@ -103,12 +139,9 @@ export async function fetchUsersFromAPI(
           String(u.role ?? "").toLowerCase() === ROLES.ADMIN
             ? ROLES.ADMIN
             : ROLES.USER,
-        status:
-          u.status === "deactivated"
-            ? ("deactivated" as const)
-            : ("active" as const),
+        status: deriveUserStatus(u),
       }))
-      .filter((u) => u.id && u.email);
+      .filter((u) => Boolean(u.email));
 
     return { success: true, data: managedUsers };
   } catch (e) {
@@ -120,6 +153,7 @@ export async function fetchUsersFromAPI(
   }
 }
 
+/** Backend: `PATCH /api/users/{userId}` with JSON body (e.g. `{ role }`). */
 export async function updateUserRoleAPI(
   accessToken: string | null,
   userIdentifier: string,
@@ -130,15 +164,13 @@ export async function updateUserRoleAPI(
       return { success: false, error: "User identifier and role are required" };
     }
 
-    const res = await fetch(
-      `${API_BASE}/api/users/${encodeURIComponent(userIdentifier.trim())}/role`,
-      {
-        method: "PATCH",
-        headers: authHeaders(accessToken),
-        credentials: "include",
-        body: JSON.stringify({ role: newRole }),
-      }
-    );
+    const id = encodeURIComponent(userIdentifier.trim());
+    const res = await fetch(`${API_BASE}/api/users/${id}`, {
+      method: "PATCH",
+      headers: authHeaders(accessToken),
+      credentials: "include",
+      body: JSON.stringify({ role: newRole }),
+    });
 
     if (!res.ok) {
       const err = await readJsonSafe<ErrorResponse>(res);
@@ -155,6 +187,13 @@ export async function updateUserRoleAPI(
   }
 }
 
+/**
+ * Persist account status: update the user record in the DB, then use action routes if needed.
+ * 1) `PATCH /api/users/{userId}` with `{ status }` (typical Mongo / REST partial update)
+ * 2) If that route does not accept status (404/405), fall back to:
+ *    - `PATCH .../deactivate` for deactivated
+ *    - `PATCH .../toggle-account` for active
+ */
 export async function updateUserStatusAPI(
   accessToken: string | null,
   userIdentifier: string,
@@ -165,15 +204,32 @@ export async function updateUserStatusAPI(
       return { success: false, error: "User identifier and status are required" };
     }
 
-    const res = await fetch(
-      `${API_BASE}/api/users/${encodeURIComponent(userIdentifier.trim())}/status`,
-      {
+    const id = encodeURIComponent(userIdentifier.trim());
+    const baseUrl = `${API_BASE}/api/users/${id}`;
+
+    let res = await fetch(baseUrl, {
+      method: "PATCH",
+      headers: authHeaders(accessToken),
+      credentials: "include",
+      body: JSON.stringify({ status }),
+    });
+
+    if (res.ok) {
+      return { success: true };
+    }
+
+    if (res.status === 404 || res.status === 405) {
+      const actionUrl =
+        status === "deactivated"
+          ? `${baseUrl}/deactivate`
+          : `${baseUrl}/toggle-account`;
+      res = await fetch(actionUrl, {
         method: "PATCH",
         headers: authHeaders(accessToken),
         credentials: "include",
-        body: JSON.stringify({ status }),
-      }
-    );
+        body: JSON.stringify({}),
+      });
+    }
 
     if (!res.ok) {
       const err = await readJsonSafe<ErrorResponse>(res);
