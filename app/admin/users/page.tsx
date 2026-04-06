@@ -462,6 +462,7 @@ export default function AdminUsersPage() {
                 </Label>
                 <select
                   id="edit-role"
+                  data-native-dark
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value)}
                   className="h-9 w-full rounded-lg border border-white/20 bg-zinc-800 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-zinc-900"
@@ -479,6 +480,7 @@ export default function AdminUsersPage() {
                 </Label>
                 <select
                   id="edit-status"
+                  data-native-dark
                   value={editStatus}
                   onChange={(e) =>
                     setEditStatus(e.target.value as "active" | "deactivated")
