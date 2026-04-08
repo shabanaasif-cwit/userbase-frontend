@@ -11,7 +11,7 @@ import {
   fetchNotificationsForUser,
   markNotificationsReadApi,
 } from "@/lib/notifications-api";
-import { BellRing, AlarmClock, UserRoundKey, CircleUserRound, LayoutDashboard, Images, Info, PhoneCall,LogIn, LogOut   } from 'lucide-react';
+import {ShieldUser ,BellRing, AlarmClock, UserRoundKey, CircleUserRound, LayoutDashboard, Images, Info, PhoneCall,LogIn, LogOut} from 'lucide-react';
 
 interface HeaderProps {
   role: string;
@@ -176,19 +176,10 @@ const Header: FC<HeaderProps> = ({
             className="flex items-center gap-3 text-white"
             onClick={handleHeaderItemClick}
           >
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
-              <svg
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-                className="h-5 w-5 text-white"
-              >
-                <path
-                  fill="currentColor"
-                  d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.86 0-7 2-7 4.5V20h14v-1.5c0-2.5-3.14-4.5-7-4.5z"
-                />
-              </svg>
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
+                <ShieldUser className="h-7 w-7 text-white" />
             </span>
-            UMS
+            User Management System
           </Link>
         </div>
 
@@ -246,7 +237,6 @@ const Header: FC<HeaderProps> = ({
                       title="Admin dashboard"
                     >
                       <LayoutDashboard />
-
                     </Link>
                   </li>
                 ) : (
@@ -258,8 +248,7 @@ const Header: FC<HeaderProps> = ({
                       aria-label="Dashboard"
                       title="Dashboard"
                     >
-                          <LayoutDashboard />
-
+                      <LayoutDashboard />
                     </Link>
                   </li>
                 )}
@@ -407,7 +396,7 @@ const Header: FC<HeaderProps> = ({
                     aria-label="Reminders"
                     title="Reminders"
                   >
-                    <AlarmClock className="h-6 w-6" />
+                    <AlarmClock/>
                   </Link>
                 </li>
               </>
@@ -421,8 +410,7 @@ const Header: FC<HeaderProps> = ({
                     aria-label="Dashboard"
                     title="Dashboard"
                   >
-                        <LayoutDashboard />
-
+                    <LayoutDashboard/>
                   </Link>
                 </li>
                 <li>
