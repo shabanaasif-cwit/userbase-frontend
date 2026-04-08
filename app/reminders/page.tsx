@@ -194,7 +194,7 @@ export default function RemindersPage() {
                 onClick={() => void handleMarkAllRead()}
                 disabled={busyId !== null}
               >
-                <CheckCheck className="mr-2 h-4 w-4" />
+                <CheckCheck className="cursor-pointermr-2 h-4 w-4" />
                 Mark page read
               </Button>
             )}

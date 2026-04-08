@@ -76,11 +76,8 @@ export default function ContactForm() {
       <CardContent>
         <form className="grid gap-5 md:grid-cols-2" onSubmit={handleSubmit}>
           <div className="space-y-2 md:col-span-1">
-            <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
-              Name
-            </Label>
             <Input
-              placeholder="Your name"
+              placeholder="Your Name Here"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -89,9 +86,11 @@ export default function ContactForm() {
           </div>
           <div className="space-y-2 md:col-span-1">
             <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
-              Email
+              Email <span className="text-red-500">*</span>
             </Label>
             <Input
+              id="email"
+              name="email"
               type="email"
               placeholder="you@example.com"
               value={email}
@@ -101,10 +100,15 @@ export default function ContactForm() {
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
-              Message
-            </Label>
+            <Label
+                htmlFor="message"
+                className="text-sm font-medium text-zinc-700 dark:text-zinc-200"
+              >
+                Message <span className="text-red-500">*</span>
+              </Label>
             <Textarea
+              id="message"
+              name="message"
               placeholder="How can we help?"
               rows={4}
               value={message}

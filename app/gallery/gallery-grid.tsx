@@ -48,7 +48,7 @@ function GalleryCard({ item }: { item: GalleryItem }) {
         </p>
         <Button
           variant="ghost"
-          className="px-0 text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition-all duration-300"
+          className="px-0 text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 transition-all duration-300 cursor-pointer"
         >
           Explore <ArrowRight />
         </Button>
@@ -80,7 +80,7 @@ export function GalleryGrid({ items }: { items: GalleryItem[] }) {
         {hasMore && (
           <Button
             variant="outline"
-            className="gap-2 shrink-0"
+            className="cursor-pointer gap-2 shrink-0"
             onClick={() => setShowAll((v) => !v)}
           >
             {showAll ? (

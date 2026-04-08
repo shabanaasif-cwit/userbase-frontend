@@ -171,12 +171,12 @@ export default function SignupPage() {
               <form className="space-y-5" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-slate-200">
-                    First name <span className="text-red-500">*</span>
+                    First Name <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="firstName"
                     type="text"
-                    placeholder="Enter your first name"
+                    placeholder="Enter your first Name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
@@ -185,12 +185,12 @@ export default function SignupPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-slate-200">
-                    Last name <span className="text-red-500">*</span>
+                    Last Name <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="lastName"
                     type="text"
-                    placeholder="Enter your last name"
+                    placeholder="Enter your last Name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
@@ -350,5 +350,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
-

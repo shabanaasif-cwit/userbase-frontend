@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
               </CardHeader>
               <CardContent className="pt-0">
                 <span className="text-sm font-medium text-sky-400 group-hover:text-sky-300">
-                  Go to Notifications →
+                  Go to Notifications <ArrowRight className="h-4 w-4 inline-block ml-0"/>
                 </span>
               </CardContent>
             </Card>
@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
               </CardHeader>
               <CardContent className="pt-0">
                 <span className="text-sm font-medium text-emerald-400 group-hover:text-emerald-300">
-                  Go to User management →
+                  Go to User management <ArrowRight className="h-4 w-4 inline-block ml-0"/>
                 </span>
               </CardContent>
             </Card>
