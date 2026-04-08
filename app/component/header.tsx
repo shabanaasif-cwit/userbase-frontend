@@ -11,7 +11,19 @@ import {
   fetchNotificationsForUser,
   markNotificationsReadApi,
 } from "@/lib/notifications-api";
-import {ShieldUser ,BellRing, AlarmClock, UserRoundKey, CircleUserRound, LayoutDashboard, Images, Info, PhoneCall,LogIn, LogOut} from 'lucide-react';
+import {
+  ShieldUser,
+  BellRing,
+  AlarmClock,
+  UserRoundKey,
+  CircleUserRound,
+  LayoutDashboard,
+  Images,
+  Info,
+  PhoneCall,
+  LogIn,
+  LogOut,
+} from "lucide-react";
 
 interface HeaderProps {
   role: string;
@@ -45,6 +57,7 @@ const Header: FC<HeaderProps> = ({
   const [notificationError, setNotificationError] = useState("");
   const [activeNotification, setActiveNotification] =
     useState<NotificationItem | null>(null);
+  const [reminderCount, setReminderCount] = useState(0);
 
   const loadNotifications = useCallback(async () => {
     if (!isAuthenticated || !userEmail) {
@@ -56,16 +69,18 @@ const Header: FC<HeaderProps> = ({
 
     setIsLoadingNotifications(true);
     setNotificationError("");
-    const { ok, items, error } = await fetchNotificationsForUser(
-      accessToken,
-      { page: 1, limit: 30 }
-    );
+    const { ok, items, error } = await fetchNotificationsForUser(accessToken, {
+      page: 1,
+      limit: 30,
+    });
     setIsLoadingNotifications(false);
+
     if (!ok) {
       setNotificationError(error ?? "Could not load notifications");
       setNotifications([]);
       return;
     }
+
     setNotifications(mergeWithPersistedReadState(items, userEmail));
   }, [accessToken, isAuthenticated, userEmail]);
 
@@ -92,10 +107,12 @@ const Header: FC<HeaderProps> = ({
 
   useEffect(() => {
     let cancelled = false;
+
     (async () => {
       if (cancelled) return;
       await loadNotifications();
     })();
+
     return () => {
       cancelled = true;
     };
@@ -125,17 +142,45 @@ const Header: FC<HeaderProps> = ({
       "/privacy": "Privacy Policy | Userbase",
       "/terms": "Terms of Service | Userbase",
     };
+
     document.title = titleByPath[pathname] ?? "Userbase";
   }, [pathname]);
 
+  useEffect(() => {
+    const syncReminderCount = () => {
+      const saved = localStorage.getItem("reminderUnreadCount");
+      setReminderCount(Number(saved || 0));
+    };
+
+    const handleReminderCountUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ count: number }>;
+      setReminderCount(customEvent.detail?.count || 0);
+    };
+
+    syncReminderCount();
+
+    window.addEventListener("reminder-count-updated", handleReminderCountUpdate);
+    window.addEventListener("storage", syncReminderCount);
+
+    return () => {
+      window.removeEventListener(
+        "reminder-count-updated",
+        handleReminderCountUpdate
+      );
+      window.removeEventListener("storage", syncReminderCount);
+    };
+  }, []);
+
   const navLinkClass =
     "inline-flex items-center justify-center transition-all duration-200 hover:scale-110 hover:text-gray-400 hover:underline underline-offset-4";
+
   const mobileNavItemClass =
     "inline-flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white transition hover:border-white/20 hover:bg-white/10";
 
   const unreadNotifications = notifications.filter((item) => !item.isRead);
   const notificationCount = unreadNotifications.length;
   const viewAllPath = role === "admin" ? "/admin/notifications" : "/notifications";
+
   const displayCount = useMemo(() => {
     if (notificationCount <= 0) return "0";
     if (notificationCount > 9) return "9+";
@@ -147,11 +192,10 @@ const Header: FC<HeaderProps> = ({
       await markNotificationsReadApi(accessToken, [item._id]);
       persistReadNotificationIds(userEmail, [item._id]);
       setNotifications((prev) =>
-        prev.map((n) =>
-          n._id === item._id ? { ...n, isRead: true } : n
-        )
+        prev.map((n) => (n._id === item._id ? { ...n, isRead: true } : n))
       );
     }
+
     setActiveNotification({ ...item, isRead: true });
   };
 
@@ -164,11 +208,12 @@ const Header: FC<HeaderProps> = ({
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       }
     }
+
     setIsNotificationsOpen(false);
   };
 
   return (
-    <header className="relative z-50 bg-gray-800 text-white p-4">
+    <header className="relative z-50 bg-gray-800 p-4 text-white">
       <div className="flex items-center justify-between md:flex-row md:items-center md:justify-between">
         <div className="text-2xl font-bold">
           <Link
@@ -177,7 +222,7 @@ const Header: FC<HeaderProps> = ({
             onClick={handleHeaderItemClick}
           >
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
-                <ShieldUser className="h-7 w-7 text-white" />
+              <ShieldUser className="h-7 w-7 text-white" />
             </span>
             User Management System
           </Link>
@@ -227,14 +272,15 @@ const Header: FC<HeaderProps> = ({
                     <CircleUserRound className="h-6 w-6" />
                   </Link>
                 </li>
+
                 {role === "admin" ? (
                   <li>
                     <Link
                       href="/admin/dashboard"
                       className={navLinkClass}
                       onClick={handleHeaderItemClick}
-                      aria-label="Admin dashboard"
-                      title="Admin dashboard"
+                      aria-label="Admin Dashboard"
+                      title="Admin Dashboard"
                     >
                       <LayoutDashboard />
                     </Link>
@@ -252,6 +298,7 @@ const Header: FC<HeaderProps> = ({
                     </Link>
                   </li>
                 )}
+
                 <li>
                   <Link
                     href="/gallery"
@@ -263,6 +310,7 @@ const Header: FC<HeaderProps> = ({
                     <Images />
                   </Link>
                 </li>
+
                 <li>
                   <Link
                     href="/contact"
@@ -274,6 +322,7 @@ const Header: FC<HeaderProps> = ({
                     <PhoneCall />
                   </Link>
                 </li>
+
                 <li>
                   <Link
                     href="/about"
@@ -285,21 +334,25 @@ const Header: FC<HeaderProps> = ({
                     <Info />
                   </Link>
                 </li>
+
                 <li className="relative">
-                  <button
-                    type="button"
-                    className="relative inline-flex items-center gap-2 transition-transform duration-200 hover:scale-110"
-                    onClick={() => setIsNotificationsOpen((prev) => !prev)}
-                    aria-label="Notifications"
-                    title="Notifications"
-                  >
-                    <BellRing className="cursor-pointer" />
-                    {notificationCount > 0 && (
-                      <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-semibold text-white">
-                        {displayCount}
-                      </span>
-                    )}
-                  </button>
+                  {/* desktop only */}
+                      <button
+                        type="button"
+                        className="relative inline-flex items-center gap-2 transition-transform duration-200 hover:scale-110"
+                        onClick={() => setIsNotificationsOpen((prev) => !prev)}
+                        aria-label="Notifications"
+                        title="Notifications"
+                      >
+                        <span className="relative inline-flex items-center justify-center">
+                          <BellRing className="cursor-pointer" />
+                          {notificationCount > 0 && (
+                            <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
+                              {displayCount}
+                            </span>
+                          )}
+                        </span>
+                      </button>
 
                   {isNotificationsOpen && (
                     <div className="absolute right-0 z-[100] mt-3 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-white/15 bg-[#0f172a] p-4 text-sm text-slate-200 shadow-2xl shadow-black/50 ring-1 ring-white/5">
@@ -333,6 +386,7 @@ const Header: FC<HeaderProps> = ({
                             {notificationError}
                           </p>
                         )}
+
                         {isLoadingNotifications ? (
                           <p className="text-xs text-slate-300">
                             Loading updates...
@@ -368,6 +422,7 @@ const Header: FC<HeaderProps> = ({
                         >
                           View all
                         </button>
+
                         <button
                           type="button"
                           onClick={() => handleNavigate("/reminders")}
@@ -375,6 +430,7 @@ const Header: FC<HeaderProps> = ({
                         >
                           Reminders
                         </button>
+
                         {role === "admin" && (
                           <button
                             type="button"
@@ -388,15 +444,21 @@ const Header: FC<HeaderProps> = ({
                     </div>
                   )}
                 </li>
+
                 <li>
                   <Link
                     href="/reminders"
-                    className={navLinkClass}
+                    className={`${navLinkClass} relative`}
                     onClick={handleHeaderItemClick}
                     aria-label="Reminders"
                     title="Reminders"
                   >
-                    <AlarmClock/>
+                    <AlarmClock />
+                    {reminderCount > 0 && (
+                      <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
+                        {reminderCount > 99 ? "99+" : reminderCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               </>
@@ -410,9 +472,10 @@ const Header: FC<HeaderProps> = ({
                     aria-label="Dashboard"
                     title="Dashboard"
                   >
-                    <LayoutDashboard/>
+                    <LayoutDashboard />
                   </Link>
                 </li>
+
                 <li>
                   <Link
                     href="/gallery"
@@ -424,6 +487,7 @@ const Header: FC<HeaderProps> = ({
                     <Images />
                   </Link>
                 </li>
+
                 <li>
                   <Link
                     href="/contact"
@@ -432,9 +496,10 @@ const Header: FC<HeaderProps> = ({
                     aria-label="Contact"
                     title="Contact"
                   >
-                   <PhoneCall />
+                    <PhoneCall />
                   </Link>
                 </li>
+
                 <li>
                   <Link
                     href="/about"
@@ -443,7 +508,7 @@ const Header: FC<HeaderProps> = ({
                     aria-label="About"
                     title="About"
                   >
-                      <Info />
+                    <Info />
                   </Link>
                 </li>
               </>
@@ -451,11 +516,11 @@ const Header: FC<HeaderProps> = ({
           </ul>
         </nav>
 
-        <div className="hidden md:flex justify-center md:justify-end">
+        <div className="hidden justify-center md:flex md:justify-end">
           {isAuthenticated ? (
             <button
               onClick={handleLogout}
-              className="cursor-pointer bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
+              className="cursor-pointer rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
               aria-label="Logout"
               title="Logout"
             >
@@ -465,7 +530,7 @@ const Header: FC<HeaderProps> = ({
             <div className="flex w-full items-center justify-center gap-3 md:w-auto md:justify-end">
               <Link
                 href="/login"
-                className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                 aria-label="Login"
                 title="Login"
               >
@@ -473,7 +538,7 @@ const Header: FC<HeaderProps> = ({
               </Link>
               <Link
                 href="/signup"
-                className="bg-emerald-600 text-white py-2 px-4 rounded hover:bg-emerald-700"
+                className="rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
                 aria-label="Sign up"
                 title="Sign up"
               >
@@ -502,14 +567,15 @@ const Header: FC<HeaderProps> = ({
                       <span>Profile</span>
                     </Link>
                   </li>
+
                   {role === "admin" ? (
                     <li>
                       <Link
                         href="/admin/dashboard"
                         className={mobileNavItemClass}
                         onClick={handleMenuClose}
-                        aria-label="Admin dashboard"
-                        title="Admin dashboard"
+                        aria-label="Admin Dashboard"
+                        title="Admin Dashboard"
                       >
                         <LayoutDashboard className="h-4 w-4" />
                         <span>Admin Dashboard</span>
@@ -529,6 +595,7 @@ const Header: FC<HeaderProps> = ({
                       </Link>
                     </li>
                   )}
+
                   <li>
                     <Link
                       href="/gallery"
@@ -541,6 +608,7 @@ const Header: FC<HeaderProps> = ({
                       <span>Gallery</span>
                     </Link>
                   </li>
+
                   <li>
                     <Link
                       href="/contact"
@@ -553,6 +621,7 @@ const Header: FC<HeaderProps> = ({
                       <span>Contact</span>
                     </Link>
                   </li>
+
                   <li>
                     <Link
                       href="/about"
@@ -565,20 +634,25 @@ const Header: FC<HeaderProps> = ({
                       <span>About</span>
                     </Link>
                   </li>
+
                   <li>
+                   {/* mobile only */}
                     <button
                       type="button"
                       className="inline-flex w-full items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-left transition hover:border-white/20 hover:bg-white/10"
                       onClick={() => setIsNotificationsOpen((prev) => !prev)}
                     >
-                      <BellRing className="h-4 w-4 cursor-pointer" />
+                      <span className="relative inline-flex items-center justify-center">
+                        <BellRing className="h-4 w-4 cursor-pointer" />
+                        {notificationCount > 0 && (
+                          <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
+                            {displayCount}
+                          </span>
+                        )}
+                      </span>
                       <span>Notifications</span>
-                      {notificationCount > 0 && (
-                        <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-semibold text-white">
-                          {displayCount}
-                        </span>
-                      )}
-                    </button>
+                    </button>   
+
                     {isNotificationsOpen && (
                       <div className="relative z-[100] mt-3 rounded-xl border border-white/15 bg-[#0f172a] p-4 text-xs text-slate-200 shadow-2xl shadow-black/50 ring-1 ring-white/5">
                         <div className="flex items-center justify-between gap-2 pb-2">
@@ -602,9 +676,11 @@ const Header: FC<HeaderProps> = ({
                             </button>
                           </div>
                         </div>
+
                         {notificationError && (
                           <p className="text-rose-300">{notificationError}</p>
                         )}
+
                         {isLoadingNotifications ? (
                           <p className="text-slate-300">Loading updates...</p>
                         ) : notificationCount === 0 ? (
@@ -628,26 +704,29 @@ const Header: FC<HeaderProps> = ({
                             ))}
                           </div>
                         )}
+
                         <div className="mt-3 flex flex-col gap-2 text-xs">
                           <button
                             type="button"
                             onClick={() => handleNavigate(viewAllPath)}
-                            className="text-sky-300 hover:text-sky-200 hover:underline underline-offset-4 text-left"
+                            className="text-left text-sky-300 hover:text-sky-200 hover:underline underline-offset-4"
                           >
                             View all
                           </button>
+
                           <button
                             type="button"
                             onClick={() => handleNavigate("/reminders")}
-                            className="text-amber-300 hover:text-amber-200 hover:underline underline-offset-4 text-left"
+                            className="text-left text-amber-300 hover:text-amber-200 hover:underline underline-offset-4"
                           >
                             Reminders
                           </button>
+
                           {role === "admin" && (
                             <button
                               type="button"
                               onClick={() => handleNavigate("/admin/notifications")}
-                              className="text-slate-300 hover:text-white hover:underline underline-offset-4 text-left"
+                              className="text-left text-slate-300 hover:text-white hover:underline underline-offset-4"
                             >
                               Manage notifications
                             </button>
@@ -656,7 +735,9 @@ const Header: FC<HeaderProps> = ({
                       </div>
                     )}
                   </li>
+
                   <li>
+                    {/* mobile only */}
                     <Link
                       href="/reminders"
                       className={mobileNavItemClass}
@@ -664,10 +745,18 @@ const Header: FC<HeaderProps> = ({
                       aria-label="Reminders"
                       title="Reminders"
                     >
-                      <AlarmClock className="h-4 w-4" />
+                      <span className="relative inline-flex items-center justify-center">
+                        <AlarmClock className="h-4 w-4" />
+                        {reminderCount > 0 && (
+                          <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
+                            {reminderCount > 9 ? "9+" : reminderCount}
+                          </span>
+                        )}
+                      </span>
+
                       <span>Reminders</span>
                     </Link>
-                  </li>
+                  </li>   
                 </>
               ) : (
                 <>
@@ -683,6 +772,7 @@ const Header: FC<HeaderProps> = ({
                       <span>Dashboard</span>
                     </Link>
                   </li>
+
                   <li>
                     <Link
                       href="/gallery"
@@ -695,6 +785,7 @@ const Header: FC<HeaderProps> = ({
                       <span>Gallery</span>
                     </Link>
                   </li>
+
                   <li>
                     <Link
                       href="/contact"
@@ -707,6 +798,7 @@ const Header: FC<HeaderProps> = ({
                       <span>Contact</span>
                     </Link>
                   </li>
+
                   <li>
                     <Link
                       href="/about"
@@ -720,7 +812,7 @@ const Header: FC<HeaderProps> = ({
                     </Link>
                   </li>
                 </>
-            )}
+              )}
             </ul>
           </nav>
 
@@ -747,6 +839,7 @@ const Header: FC<HeaderProps> = ({
                   <LogIn className="h-4 w-4" />
                   Login
                 </Link>
+
                 <Link
                   href="/signup"
                   className="inline-flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2 text-center text-white hover:bg-emerald-700"
@@ -757,11 +850,12 @@ const Header: FC<HeaderProps> = ({
                   <UserRoundKey className="h-4 w-4" />
                   Sign up
                 </Link>
-              </> 
+              </>
             )}
           </div>
         </div>
       )}
+
       {activeNotification && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-950 p-6 shadow-xl">
@@ -774,6 +868,7 @@ const Header: FC<HeaderProps> = ({
                   {activeNotification.title}
                 </h2>
               </div>
+
               <button
                 type="button"
                 onClick={() => setActiveNotification(null)}
@@ -782,6 +877,7 @@ const Header: FC<HeaderProps> = ({
                 Close
               </button>
             </div>
+
             <p className="mt-4 text-sm text-slate-300">
               {activeNotification.message}
             </p>
