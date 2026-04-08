@@ -61,6 +61,16 @@ export default function RemindersPage() {
     "all"
   );
   const limit = 10;
+  
+  const updateReminderCount = useCallback((items: ReminderItem[]) => {
+    const unread = items.filter((r) => !r.isRead).length;
+    localStorage.setItem("reminderUnreadCount", String(unread));
+    window.dispatchEvent(
+      new CustomEvent("reminder-count-updated", {
+        detail: { count: unread },
+      })
+    );
+  }, []);
 
   useEffect(() => {
     if (!isReady) return;
@@ -81,6 +91,7 @@ export default function RemindersPage() {
   const load = useCallback(async () => {
     setLoadError("");
     setIsLoading(true);
+  
     const { ok, items, meta, error } = await fetchReminders(accessToken, {
       page,
       limit,
@@ -88,15 +99,16 @@ export default function RemindersPage() {
       read:
         readFilter === "all" ? undefined : readFilter === "read" ? true : false,
     });
+  
     setIsLoading(false);
-
+  
     if (!ok) {
       setLoadError(error ?? "Failed to load reminders");
       setReminders([]);
       setPagination(meta);
       return;
     }
-
+  
     setReminders(items);
     setPagination(meta);
   }, [accessToken, limit, page, readFilter, search]);
@@ -111,30 +123,41 @@ export default function RemindersPage() {
     setPage(pagination.totalPages);
   }, [page, pagination.totalPages]);
 
+  useEffect(() => {
+    updateReminderCount(reminders);
+  }, [reminders, updateReminderCount]);
+
   const handleMarkRead = async (id: string) => {
-    setBusyId(id);
-    const res = await markReminderReadApi(accessToken, id);
-    setBusyId(null);
-    if (!res.ok) {
-      setLoadError(res.error ?? "Could not mark as read");
-      return;
-    }
-    setReminders((prev) =>
-      prev.map((item) => (item._id === id ? { ...item, isRead: true } : item))
-    );
-  };
+  setBusyId(id);
+  const res = await markReminderReadApi(accessToken, id);
+  setBusyId(null);
+
+  if (!res.ok) {
+    setLoadError(res.error ?? "Could not mark as read");
+    return;
+  }
+
+  setReminders((prev) =>
+    prev.map((item) =>
+      item._id === id ? { ...item, isRead: true } : item
+    )
+  );
+};
 
   const handleMarkAllRead = async () => {
     const unread = reminders.filter((r) => !r.isRead);
+
     for (const r of unread) {
       setBusyId(r._id);
       const res = await markReminderReadApi(accessToken, r._id);
+
       if (!res.ok) {
         setBusyId(null);
         setLoadError(res.error ?? "Could not mark all as read");
         return;
       }
     }
+
     setBusyId(null);
     await load();
   };
@@ -170,7 +193,7 @@ export default function RemindersPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                  Your reminders
+                  Your Reminders
                 </h1>
                 <p className="mt-1.5 max-w-md text-sm leading-relaxed text-zinc-400">
                   Items sent when an admin uses "Send reminder" on a
@@ -186,7 +209,8 @@ export default function RemindersPage() {
                 )}
               </div>
             </div>
-            {hasUnreadOnPage && (
+
+           {/* {hasUnreadOnPage && (
               <Button
                 variant="outline"
                 size="sm"
@@ -194,23 +218,24 @@ export default function RemindersPage() {
                 onClick={() => void handleMarkAllRead()}
                 disabled={busyId !== null}
               >
-                <CheckCheck className="cursor-pointermr-2 h-4 w-4" />
+                <CheckCheck className="mr-2 h-4 w-4" />
                 Mark page read
               </Button>
-            )}
+            )} */}
           </div>
         </header>
 
         <Card className="mt-8 overflow-hidden border-white/[0.06] bg-zinc-900/60 shadow-xl shadow-black/20 backdrop-blur-sm">
           <CardHeader className="border-b border-white/[0.06] bg-white/[0.02] px-6 py-5 sm:px-8">
             <CardTitle className="text-lg font-semibold text-white">
-              All reminders
+              All Reminders
             </CardTitle>
             <CardDescription className="mt-0.5 text-sm text-zinc-500">
               {resultLabel}
               {user?.email ? ` - ${user.email}` : ""}
             </CardDescription>
           </CardHeader>
+
           <CardContent className="p-4 sm:p-6">
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="relative w-full sm:max-w-sm">
@@ -218,7 +243,7 @@ export default function RemindersPage() {
                 <input
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search reminders..."
+                  placeholder="Search Reminders..."
                   className="h-10 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-500/40 focus:bg-white/10"
                 />
               </div>
@@ -231,7 +256,7 @@ export default function RemindersPage() {
                 }}
                 className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition focus:border-amber-500/40 focus:bg-white/10"
               >
-                <option value="all">All reminders</option>
+                <option value="all">All Reminders</option>
                 <option value="unread">Unread only</option>
                 <option value="read">Read only</option>
               </select>
@@ -273,15 +298,18 @@ export default function RemindersPage() {
                           <p className="text-sm font-semibold text-white">
                             {item.title || "Reminder"}
                           </p>
+
                           {item.body ? (
                             <p className="mt-1 text-sm leading-relaxed text-zinc-400">
                               {item.body}
                             </p>
                           ) : null}
+
                           <p className="mt-2 text-xs text-zinc-500">
                             {formatRelative(item.createdAt)}
                           </p>
                         </div>
+
                         {!item.isRead && (
                           <Button
                             type="button"
@@ -303,6 +331,7 @@ export default function RemindersPage() {
                   <p>
                     Page {pagination.page} of {pagination.totalPages}
                   </p>
+
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
@@ -310,11 +339,14 @@ export default function RemindersPage() {
                       size="sm"
                       className="cursor-pointer border-white/10 bg-white/5 text-zinc-300 hover:border-white/20 hover:bg-white/10"
                       disabled={page <= 1 || isLoading}
-                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      onClick={() =>
+                        setPage((current) => Math.max(1, current - 1))
+                      }
                     >
                       <ChevronLeft className="mr-1 h-4 w-4" />
                       Previous
                     </Button>
+
                     <Button
                       type="button"
                       variant="outline"
@@ -344,6 +376,7 @@ export default function RemindersPage() {
           >
             Notifications
           </Link>
+
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
