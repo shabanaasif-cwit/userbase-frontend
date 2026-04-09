@@ -92,7 +92,7 @@ export default function ProfilePage() {
   }, [user?.email, role, accessToken]);
 
   const profile = user
-    ? { id: "", name: user.name ?? "", email: user.email, role }
+    ? { id: "", firstName: user.firstName ?? "", lastName: user.lastName ?? "", email: user.email, role }
     : null;
   const admin = isAdmin(role);
 
@@ -111,13 +111,18 @@ export default function ProfilePage() {
     );
   }
 
-  const initials = getInitials(profile?.name, profile?.email);
-  const displayName = getDisplayName(profile?.name, profile?.email);
+  const initials = getInitials(profile?.firstName || profile?.lastName, profile?.email);
+   // Use firstName and lastName if available
+  const displayName = user?.firstName && user?.lastName
+    ? `${user.firstName} ${user.lastName}`
+    : getDisplayName(profile?.firstName || profile?.lastName, profile?.email);  // Fallback to the old method if firstName/lastName are not available.
+
   const viewAllPath = admin ? "/admin/notifications" : "/notifications";
   const unreadNotifications = notifications.filter((item) => !item.isRead);
 
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(94,234,212,0.18),_transparent_55%),radial-gradient(circle_at_20%_20%,_rgba(56,189,248,0.16),_transparent_45%),linear-gradient(160deg,_#020617,_#0f172a_45%,_#020617)] font-sans text-white">
+  <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(94,234,212,0.18),_transparent_55%),radial-gradient(circle_at_20%_20%,_rgba(56,189,248,0.16),_transparent_45%),linear-gradient(160deg,_#020617,_#0f172a_45%,_#020617)] font-sans text-white">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-12 sm:px-6 sm:py-16">
         <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-10 shadow-[0_35px_120px_-70px_rgba(56,189,248,0.8)]">
           <div className="pointer-events-none absolute -top-20 right-10 h-56 w-56 rounded-full bg-cyan-400/20 blur-[90px]" />
@@ -143,21 +148,10 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
-                {[
-                  { label: "Active workspaces", value: "04" },
-                  { label: "Automation score", value: "92%" },
-                  { label: "Focus streak", value: "18 days" },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4"
-                  >
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                      {item.label}
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold text-white">
-                      {item.value}
-                    </p>
+                {[{ label: "Active workspaces", value: "04" }, { label: "Automation score", value: "92%" }, { label: "Focus streak", value: "18 days" }].map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.label}</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">{item.value}</p>
                   </div>
                 ))}
               </div>
@@ -167,34 +161,21 @@ export default function ProfilePage() {
                 Verified identity
               </div>
               <div className="flex flex-wrap gap-2 text-xs text-slate-200">
-                {["Zero-trust ready", "SLA: 99.9%", "SOC2 aligned"].map(
-                  (badge) => (
-                    <span
-                      key={badge}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1"
-                    >
-                      {badge}
-                    </span>
-                  )
-                )}
+                {["Zero-trust ready", "SLA: 99.9%", "SOC2 aligned"].map((badge) => (
+                  <span key={badge} className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{badge}</span>
+                ))}
               </div>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link href="/dashboard">
-                  <Button className="cursor-pointer bg-cyan-400 text-slate-900 hover:bg-cyan-300">
-                    Jump to dashboard
-                  </Button>
+                  <Button className="cursor-pointer bg-cyan-400 text-slate-900 hover:bg-cyan-300">Jump to dashboard</Button>
                 </Link>
                 {admin && (
                   <Link href="/admin/dashboard">
-                    <Button className="cursor-pointer" variant="secondary">
-                      Admin dashboard
-                    </Button>
+                    <Button className="cursor-pointer" variant="secondary">Admin dashboard</Button>
                   </Link>
                 )}
                 <Link href="/support">
-                  <Button className="cursor-pointer" variant="secondary">
-                    Request support
-                  </Button>
+                  <Button className="cursor-pointer" variant="secondary">Request support</Button>
                 </Link>
               </div>
             </div>

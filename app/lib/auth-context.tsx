@@ -263,7 +263,8 @@ export async function updateUserStatusAPI(
 export type AuthUser = {
   email: string;
   role: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
 };
 
 type AuthLoginResult = { success: boolean; error?: string };
@@ -306,7 +307,7 @@ function mapMeUser(raw: Record<string, unknown>): AuthUser | null {
     [String(raw.firstName ?? "").trim(), String(raw.lastName ?? "").trim()]
       .filter(Boolean)
       .join(" ") || String(raw.name ?? "").trim() || undefined;
-  return { email, role, name };
+  return { email, role, firstName: raw.firstName as string | undefined, lastName: raw.lastName as string | undefined };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -429,7 +430,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData: AuthUser = {
           email: backendUser.email.toLowerCase(),
           role: roleResolved,
-          name: fullName,
+          firstName: backendUser.firstName as string | undefined,
+          lastName: backendUser.lastName as string | undefined,
         };
 
         const token = json?.accessToken ?? null;
@@ -517,7 +519,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData: AuthUser = {
           email: backendUser.email.toLowerCase(),
           role,
-          name: fullName,
+          firstName: backendUser.firstName as string | undefined,
+          lastName: backendUser.lastName as string | undefined,
         };
 
         const token = json?.accessToken ?? null;
