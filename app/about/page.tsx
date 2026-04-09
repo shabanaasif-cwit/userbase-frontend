@@ -82,7 +82,7 @@ export default function AboutPage() {
               confidence in access management.
             </p>
           </CardContent>
-        </Card>
+        </Card>   
       </section>
 
       <Card className="mt-10 overflow-hidden border-violet-200/60 bg-gradient-to-r from-sky-100 via-emerald-100 to-amber-100 shadow-lg dark:border-violet-800/40 dark:from-sky-900/80 dark:via-emerald-900/80 dark:to-amber-900/80">

@@ -36,7 +36,6 @@ export default function AdminDashboardPage() {
               <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 Signed in as <span className="font-medium text-white">{user.email}</span>
-                {user.name && ` (${user.name})`}
               </p>
             )}
           </div>
@@ -85,7 +84,7 @@ export default function AdminDashboardPage() {
                     User management
                   </CardTitle>
                   <CardDescription className="mt-1 text-sm text-zinc-400">
-                    View and manage user accounts: roles and status.
+                    View and manage user accounts: Roles and Status.
                   </CardDescription>
                 </div>
                 <ArrowRight className="h-5 w-5 shrink-0 text-zinc-500 transition group-hover:translate-x-1 group-hover:text-emerald-400" />
