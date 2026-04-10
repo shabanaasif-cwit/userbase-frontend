@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { API_BASE, authHeaders, readJsonSafe } from "./api-config";
+import { clearReadReminderSession } from "./reminder-read-session";
 
 export type ManagedUser = {
   id: string;
@@ -539,6 +540,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    const email = user?.email ?? null;
     try {
       await fetch(`${API_BASE}/api/auth/logout`, {
         method: "POST",
@@ -548,9 +550,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // still clear client state
     }
+    clearReadReminderSession(email);
     setUser(null);
     setAccessToken(null);
-  }, [accessToken]);
+  }, [accessToken, user?.email]);
 
   const updateName = useCallback(
     async (name: string) => {
