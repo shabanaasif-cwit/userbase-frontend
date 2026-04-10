@@ -377,6 +377,8 @@ export type ReminderItem = {
   title: string;
   body: string;
   isRead: boolean;
+  myRead?: boolean;
+  isRecipient?: boolean;
   createdAt?: string;
 };
 
@@ -404,6 +406,16 @@ function mapReminderRow(row: unknown): ReminderItem | null {
     title: String(r.title ?? ""),
     body: textFromApi(r),
     isRead: Boolean(r.isRead ?? r.read),
+    myRead:
+      typeof r.myRead === "boolean"
+        ? r.myRead
+        : typeof r.isRead === "boolean"
+          ? r.isRead
+          : typeof r.read === "boolean"
+            ? r.read
+            : undefined,
+    isRecipient:
+      typeof r.isRecipient === "boolean" ? r.isRecipient : undefined,
     createdAt: typeof r.createdAt === "string" ? r.createdAt : undefined,
   };
 }
