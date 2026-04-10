@@ -11,6 +11,10 @@ import {
   type ReminderListMeta,
 } from "@/lib/notifications-api";
 import {
+  isReminderReadForSession,
+  rememberReadReminderId,
+} from "@/lib/reminder-read-session";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -45,6 +49,10 @@ const DEFAULT_PAGINATION: ReminderListMeta = {
   totalPages: 1,
 };
 
+function isReminderRead(reminder: ReminderItem, userEmail?: string | null) {
+  return isReminderReadForSession(reminder, userEmail);
+}
+
 export default function RemindersPage() {
   const router = useRouter();
   const { user, isAuthenticated, isReady, accessToken } = useAuth();
@@ -64,7 +72,7 @@ export default function RemindersPage() {
   
   const updateReminderCount = useCallback((items: ReminderItem[]) => {
     const unread = items.filter(
-      (r) => r.isRecipient !== false && !r.isRead
+      (r) => r.isRecipient !== false && !isReminderRead(r, user?.email)
     ).length;
     localStorage.setItem("reminderUnreadCount", String(unread));
     window.dispatchEvent(
@@ -72,7 +80,7 @@ export default function RemindersPage() {
         detail: { count: unread },
       })
     );
-  }, []);
+  }, [user?.email]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -138,16 +146,17 @@ export default function RemindersPage() {
     setLoadError(res.error ?? "Could not mark as read");
     return;
   }
+  rememberReadReminderId(id, user?.email);
 
   setReminders((prev) =>
     prev.map((item) =>
       item._id === id ? { ...item, isRead: true } : item
     )
   );
-};
+  };
 
   const handleMarkAllRead = async () => {
-    const unread = reminders.filter((r) => !r.isRead);
+    const unread = reminders.filter((r) => !isReminderRead(r, user?.email));
 
     for (const r of unread) {
       setBusyId(r._id);
@@ -158,6 +167,7 @@ export default function RemindersPage() {
         setLoadError(res.error ?? "Could not mark all as read");
         return;
       }
+      rememberReadReminderId(r._id, user?.email);
     }
 
     setBusyId(null);
@@ -176,10 +186,10 @@ export default function RemindersPage() {
   }
 
   const unreadCount = reminders.filter(
-    (r) => r.isRecipient !== false && !r.isRead
+    (r) => r.isRecipient !== false && !isReminderRead(r, user?.email)
   ).length;
   const hasUnreadOnPage = reminders.some(
-    (r) => r.isRecipient !== false && !r.isRead
+    (r) => r.isRecipient !== false && !isReminderRead(r, user?.email)
   );
   const resultLabel =
     pagination.total === 1 ? "1 reminder" : `${pagination.total} reminders`;
@@ -294,7 +304,7 @@ export default function RemindersPage() {
                     <li
                       key={item._id}
                       className={`rounded-xl border px-4 py-4 sm:px-5 ${
-                        item.isRead
+                        isReminderRead(item, user?.email)
                           ? "border-white/[0.04] bg-white/[0.02]"
                           : "border-l-4 border-l-amber-500/60 border-white/[0.06] bg-amber-500/[0.06]"
                       }`}
@@ -316,7 +326,7 @@ export default function RemindersPage() {
                           </p>
                         </div>
 
-                        {item.isRecipient !== false && !item.isRead && (
+                        {item.isRecipient !== false && !isReminderRead(item, user?.email) && (
                           <Button
                             type="button"
                             size="sm"

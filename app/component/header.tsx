@@ -9,8 +9,10 @@ import {
 } from "@/lib/notification-read-persistence";
 import {
   fetchNotificationsForUser,
+  fetchReminders,
   markNotificationsReadApi,
 } from "@/lib/notifications-api";
+import { isReminderReadForSession } from "@/lib/reminder-read-session";
 import {
   ShieldUser,
   BellRing,
@@ -84,6 +86,36 @@ const Header: FC<HeaderProps> = ({
     setNotifications(mergeWithPersistedReadState(items, userEmail));
   }, [accessToken, isAuthenticated, userEmail]);
 
+  const loadReminderCount = useCallback(async () => {
+    if (!isAuthenticated || !userEmail) {
+      setReminderCount(0);
+      return;
+    }
+
+    let unread = 0;
+    let page = 1;
+    let totalPages = 1;
+
+    do {
+      const { ok, items, meta } = await fetchReminders(accessToken, {
+        page,
+        limit: 100,
+      });
+
+      if (!ok) return;
+
+      unread += items.filter(
+        (item) =>
+          item.isRecipient !== false && !isReminderReadForSession(item, userEmail)
+      ).length;
+      totalPages = meta.totalPages;
+      page += 1;
+    } while (page <= totalPages);
+
+    localStorage.setItem("reminderUnreadCount", String(unread));
+    setReminderCount(unread);
+  }, [accessToken, isAuthenticated, userEmail]);
+
   const handleLogout = () => {
     onLogout();
     router.push("/login");
@@ -111,17 +143,23 @@ const Header: FC<HeaderProps> = ({
     (async () => {
       if (cancelled) return;
       await loadNotifications();
+      await loadReminderCount();
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [loadNotifications, role]);
+  }, [loadNotifications, loadReminderCount, role]);
 
   useEffect(() => {
     if (!isAuthenticated || !userEmail) return;
     void loadNotifications();
   }, [isAuthenticated, isNotificationsOpen, loadNotifications, pathname, userEmail]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !userEmail) return;
+    void loadReminderCount();
+  }, [isAuthenticated, loadReminderCount, pathname, userEmail]);
 
   useEffect(() => {
     const titleByPath: Record<string, string> = {
@@ -179,7 +217,7 @@ const Header: FC<HeaderProps> = ({
 
   const unreadNotifications = notifications.filter((item) => !item.isRead);
   const notificationCount = unreadNotifications.length;
-  const viewAllPath = role === "admin" ? "/admin/notifications" : "/notifications";
+  const viewAllPath = "/notifications";
 
   const displayCount = useMemo(() => {
     if (notificationCount <= 0) return "0";
