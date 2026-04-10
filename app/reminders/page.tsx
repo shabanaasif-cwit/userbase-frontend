@@ -63,7 +63,9 @@ export default function RemindersPage() {
   const limit = 10;
   
   const updateReminderCount = useCallback((items: ReminderItem[]) => {
-    const unread = items.filter((r) => !r.isRead).length;
+    const unread = items.filter(
+      (r) => r.isRecipient !== false && !r.isRead
+    ).length;
     localStorage.setItem("reminderUnreadCount", String(unread));
     window.dispatchEvent(
       new CustomEvent("reminder-count-updated", {
@@ -173,8 +175,12 @@ export default function RemindersPage() {
     );
   }
 
-  const unreadCount = reminders.filter((r) => !r.isRead).length;
-  const hasUnreadOnPage = reminders.some((r) => !r.isRead);
+  const unreadCount = reminders.filter(
+    (r) => r.isRecipient !== false && !r.isRead
+  ).length;
+  const hasUnreadOnPage = reminders.some(
+    (r) => r.isRecipient !== false && !r.isRead
+  );
   const resultLabel =
     pagination.total === 1 ? "1 reminder" : `${pagination.total} reminders`;
 
@@ -310,7 +316,7 @@ export default function RemindersPage() {
                           </p>
                         </div>
 
-                        {!item.isRead && (
+                        {item.isRecipient !== false && !item.isRead && (
                           <Button
                             type="button"
                             size="sm"
