@@ -4,7 +4,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import ContactForm from "../component/contact-form"
 import PageShell from "../component/page-shell"
 import { Mail, Phone, MapPin } from "lucide-react"
 
@@ -99,8 +98,6 @@ export default function ContactPage() {
           </Card>
         </a>
       </section>
-
-      <ContactForm />
     </PageShell>
   )
 }

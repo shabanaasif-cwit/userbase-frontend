@@ -343,11 +343,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (u) {
             setUser(u);
             setAccessToken(token);
-          } else {
+          } 
+          //Ensures that if the user data is invalid, the state is cleared
+          else {
             setUser(null);
             setAccessToken(null);
           }
-        } else {
+        } 
+        //if the API request fails
+        else {
           setUser(null);
           setAccessToken(null);
         }
@@ -466,7 +470,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ) {
         return { success: false, error: "Signup failed. Please try again." };
       }
-
+      //refers to actual data that is transmitted as a part of reuest or reponse
       const payload = {
         firstName: data.firstName?.trim(),
         lastName: data.lastName?.trim(),

@@ -201,7 +201,8 @@ export default function DashboardPage() {
                 <Dialog>
                   <DialogTrigger
                     className={cn(
-                      buttonVariants({ variant: "ghost", size: "lg" })
+                      buttonVariants({ variant: "ghost", size: "lg" }),
+                        "cursor-pointer"
                     )}
                   >
                     Quick tour
@@ -221,7 +222,8 @@ export default function DashboardPage() {
                     <DialogFooter>
                       <DialogClose
                         className={cn(
-                          buttonVariants({ variant: "secondary" })
+                          buttonVariants({ variant: "secondary"}),
+                            "cursor-pointer"
                         )}
                       >
                         Got it
