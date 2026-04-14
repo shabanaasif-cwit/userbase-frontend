@@ -9,12 +9,12 @@ export const metadata = {
     "Terms and conditions for the User Management System. Acceptable use, account security, and service availability.",
 }
 
-export default function TermsPage() {
-  const effectiveDate = new Date().toLocaleDateString(undefined, {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  })
+  export default function TermsPage() {
+    const effectiveDate = new Date().toLocaleDateString(undefined, {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    })
 
   return (
     <PageShell variant="dark" maxWidth="narrow">

@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import {
   fetchNotificationsForUser,
   markNotificationsReadApi,
+  wasNotificationEdited,
 } from "@/lib/notifications-api"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { buttonVariants } from "@/components/ui/button"
@@ -358,7 +359,10 @@ export default function DashboardPage() {
                     <p className="mt-2 text-sm text-zinc-200">
                       {item.message}
                     </p>
-                    {item.updatedAt && (
+                    {wasNotificationEdited(
+                      item.createdAt,
+                      item.updatedAt
+                    ) && (
                       <span className="mt-2 inline-block rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
                         Edited
                       </span>

@@ -11,6 +11,7 @@ import {
 import {
   fetchNotificationsForUser,
   markNotificationsReadApi,
+  wasNotificationEdited,
 } from "@/lib/notifications-api";
 import {
   Card,
@@ -230,7 +231,10 @@ export default function NotificationsPage() {
                           {item.message}
                         </p>
                         <div className="mt-3 flex flex-wrap items-center gap-2">
-                          {item.updatedAt && (
+                          {wasNotificationEdited(
+                            item.createdAt,
+                            item.updatedAt
+                          ) && (
                             <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400 ring-1 ring-amber-500/20">
                               Edited
                             </span>
