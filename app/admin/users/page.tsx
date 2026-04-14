@@ -42,6 +42,11 @@ const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 const ROLE_OPTIONS = [ROLES.USER, ROLES.ADMIN];
 const STATUS_OPTIONS = ["active", "deactivated"] as const;
 
+function getUserDisplayName(user: ManagedUser) {
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  return fullName || user.name || user.email;
+}
+
 export default function AdminUsersPage() {
   const { accessToken } = useAuth();
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -81,7 +86,7 @@ export default function AdminUsersPage() {
       list = list.filter(
         (u) =>
           u.email.toLowerCase().includes(q) ||
-          (u.name && u.name.toLowerCase().includes(q))
+          getUserDisplayName(u).toLowerCase().includes(q)
       );
     }
     if (roleFilter !== "all") {
@@ -228,7 +233,7 @@ export default function AdminUsersPage() {
               <select
                 data-native-dark
                 value={roleFilter}
-                onChange={(e) => {
+                onChange={(e) => {  
                   setRoleFilter(e.target.value);
                   setPage(1);
                 }}
@@ -257,7 +262,7 @@ export default function AdminUsersPage() {
               <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow className="border-white/[0.06] bg-emerald-500/10 hover:bg-emerald-500/10">
-                    <TableHead className="font-semibold text-zinc-200">Username</TableHead>
+                    <TableHead className="font-semibold text-zinc-200">User Name</TableHead>
                     <TableHead className="font-semibold text-zinc-200">Email</TableHead>
                     <TableHead className="font-semibold text-zinc-200">Role</TableHead>
                     <TableHead className="font-semibold text-zinc-200">Status</TableHead>
@@ -281,7 +286,7 @@ export default function AdminUsersPage() {
                         className="border-white/[0.06] transition-colors hover:bg-emerald-500/5"
                       >
                         <TableCell className="font-medium text-white">
-                          {user.name || user.email}
+                          {getUserDisplayName(user)}
                         </TableCell>
                         <TableCell className="text-zinc-300">
                           {user.email}
@@ -454,7 +459,7 @@ export default function AdminUsersPage() {
           {editingUser && (
             <div className="grid gap-4 py-2">
               <p className="text-sm text-zinc-400">
-                {editingUser.name || editingUser.email} · {editingUser.email}
+                {getUserDisplayName(editingUser)} · {editingUser.email}
               </p>
               <div className="grid gap-2">
                 <Label htmlFor="edit-role" className="text-zinc-200">
