@@ -71,12 +71,18 @@ export default function PrivacyPage() {
               </Card>
             </div>
 
-            <Card className="mt-8 border-white/10 bg-gradient-to-r from-indigo-500/20 via-sky-500/20 to-emerald-500/20 text-white">
+           <Card className="mt-8 border-white/10 bg-gradient-to-r from-indigo-500/20 via-sky-500/20 to-emerald-500/20 text-white">
               <CardHeader>
                 <CardTitle className="text-base">Effective date</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-base font-medium">March 10, 2026</p>
+                <p className="text-base font-medium">
+                  {new Date().toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
               </CardContent>
             </Card>
           </CardContent>

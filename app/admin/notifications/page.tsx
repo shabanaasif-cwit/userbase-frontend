@@ -46,6 +46,7 @@ import {
   Trash2,
   BellRing,
   Bell,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -349,7 +350,8 @@ export default function AdminNotificationsPage() {
             href="/admin/dashboard"
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
           >
-            ← Back to Admin Dashboard
+            <ArrowLeft />
+            Back to Admin Dashboard
           </Link>
         </p>
       </main>

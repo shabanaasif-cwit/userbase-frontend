@@ -9,6 +9,7 @@ import { useAuth, isAdmin } from "@/lib/auth-context";
 import {
   fetchNotificationsForUser,
   markNotificationsReadApi,
+  wasNotificationEdited,
 } from "@/lib/notifications-api";
 
 type NotificationItem = {
@@ -249,7 +250,10 @@ export default function ProfilePage() {
                         <p className="mt-1 text-xs text-slate-300">
                           {item.message}
                         </p>
-                        {item.updatedAt && (
+                        {wasNotificationEdited(
+                          item.createdAt,
+                          item.updatedAt
+                        ) && (
                           <span className="mt-1.5 inline-block rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
                             Edited
                           </span>

@@ -25,7 +25,7 @@ export default function SignupPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState(""); // Phone number state
+  //const [phone, setPhone] = useState(""); // Phone number state
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState(""); // Initially empty
@@ -66,14 +66,14 @@ export default function SignupPage() {
       setErrorMessage("Email is required.");
       return;
     }
-    if (!phone.trim()) {
+   {/* if (!phone.trim()) {
       setErrorMessage("Phone number is required.");
       return;
     }
     if (phone.length !== 11 || !/^\d{11}$/.test(phone)) {
       setErrorMessage("Phone number must be exactly 11 digits.");
       return;
-    }
+    }}  */} 
     if (!password.trim()) {
       setErrorMessage("Password is required.");
       return;
@@ -211,7 +211,7 @@ export default function SignupPage() {
                     className="input-field"
                   />
                 </div>
-                <div className="space-y-2">
+               { /* <div className="space-y-2">
                   <Label htmlFor="phone" className="text-slate-200">
                     Phone Number <span className="text-red-500">*</span>
                   </Label>
@@ -225,7 +225,7 @@ export default function SignupPage() {
                     className="input-field"
                     maxLength={11} // Limit to 11 characters
                   />
-                </div>
+                </div>  */}
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-slate-200">
                     Password <span className="text-red-500">*</span>

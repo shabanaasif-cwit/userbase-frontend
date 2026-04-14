@@ -225,19 +225,6 @@ export default function RemindersPage() {
                 )}
               </div>
             </div>
-
-           {/* {hasUnreadOnPage && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 cursor-pointer border-white/10 bg-white/5 font-medium text-zinc-300 hover:border-amber-500/40 hover:bg-amber-500/15 hover:text-amber-200"
-                onClick={() => void handleMarkAllRead()}
-                disabled={busyId !== null}
-              >
-                <CheckCheck className="mr-2 h-4 w-4" />
-                Mark page read
-              </Button>
-            )} */}
           </div>
         </header>
 
@@ -327,16 +314,16 @@ export default function RemindersPage() {
                         </div>
 
                         {item.isRecipient !== false && !isReminderRead(item, user?.email) && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            className="shrink-0 cursor-pointer"
-                            disabled={busyId === item._id}
-                            onClick={() => void handleMarkRead(item._id)}
-                          >
-                            {busyId === item._id ? "Saving..." : "Mark read"}
-                          </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              className="shrink-0 cursor-pointer"
+                              disabled={busyId === item._id}
+                              onClick={() => void handleMarkRead(item._id)}
+                            >
+                              {busyId === item._id ? "Saving..." : "Mark read"}
+                            </Button>
                         )}
                       </div>
                     </li>

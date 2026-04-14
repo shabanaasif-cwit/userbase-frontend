@@ -27,6 +27,20 @@ export type UserNotification = {
 
 type ErrorResponse = { message?: string; error?: string };
 
+export function wasNotificationEdited(
+  createdAt?: string,
+  updatedAt?: string
+): boolean {
+  if (!createdAt || !updatedAt) return false;
+
+  const createdMs = Date.parse(createdAt);
+  const updatedMs = Date.parse(updatedAt);
+
+  if (Number.isNaN(createdMs) || Number.isNaN(updatedMs)) return false;
+
+  return updatedMs > createdMs;
+}
+
 /** Backend uses `body`; UI/store uses `message`. */
 function textFromApi(raw: Record<string, unknown>): string {
   return String(raw.body ?? raw.message ?? "");
