@@ -14,6 +14,8 @@ import { clearReadReminderSession } from "./reminder-read-session";
 export type ManagedUser = {
   id: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
   name: string;
   role: string;
   status: "active" | "deactivated";
@@ -132,6 +134,8 @@ export async function fetchUsersFromAPI(
           u._id ?? u.id ?? u.userId ?? (typeof u.user_id === "string" ? u.user_id : undefined)
         ),
         email: String(u.email ?? "").trim().toLowerCase(),
+        firstName: String(u.firstName ?? "").trim() || undefined,
+        lastName: String(u.lastName ?? "").trim() || undefined,
         name:
           u.firstName || u.lastName
             ? `${String(u.firstName ?? "").trim()} ${String(u.lastName ?? "").trim()}`.trim()
