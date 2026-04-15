@@ -211,21 +211,6 @@ export default function SignupPage() {
                     className="input-field"
                   />
                 </div>
-               { /* <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-slate-200">
-                    Phone Number <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="text"
-                    placeholder="Enter your phone number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                    className="input-field"
-                    maxLength={11} // Limit to 11 characters
-                  />
-                </div>  */}
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-slate-200">
                     Password <span className="text-red-500">*</span>
