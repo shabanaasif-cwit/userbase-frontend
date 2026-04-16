@@ -16,6 +16,56 @@ import {
   ROLES,
 } from "@/lib/auth-context";
 
+/** Maps backend “unknown email” errors to a single user-facing message. */
+function isEmailNotFoundApiMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  if (m.includes("password") || m.includes("credential")) return false;
+
+  if (m.includes("email") || m.includes("username") || m.includes("user name")) {
+    return (
+      m.includes("not found") ||
+      m.includes("could not find") ||
+      m.includes("couldn't find") ||
+      m.includes("no user") ||
+      m.includes("unknown") ||
+      m.includes("does not exist") ||
+      m.includes("doesn't exist") ||
+      m.includes("not registered") ||
+      m.includes("is not registered") ||
+      m.includes("invalid")
+    );
+  }
+
+  if (
+    m.includes("user not found") ||
+    m.includes("no user found") ||
+    m.includes("account not found")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/** Maps backend role-mismatch errors to a single user-facing message. */
+function isRoleMismatchApiMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  if (!m.includes("role")) return false;
+
+  return (
+    m.includes("not found") ||
+    m.includes("could not find") ||
+    m.includes("couldn't find") ||
+    m.includes("no user") ||
+    m.includes("wrong role") ||
+    m.includes("incorrect role") ||
+    m.includes("invalid role") ||
+    m.includes("role mismatch") ||
+    m.includes("mismatch") ||
+    (m.includes("find") && m.includes("user"))
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated, isReady, role } = useAuth();
@@ -27,6 +77,7 @@ export default function LoginPage() {
       router.replace(isAdmin(role) ? "/admin/dashboard" : "/dashboard");
     }
   }, [isReady, isAuthenticated, role, router]);
+
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState("");
@@ -42,43 +93,41 @@ export default function LoginPage() {
       setErrorMessage("Email is required.");
       return;
     }
+
     if (!authValidation.emailFormat(email)) {
       setErrorMessage("Please enter a valid email address.");
       return;
     }
+
     if (!password) {
       setErrorMessage("Password is required.");
       return;
     }
-    if (password.length < authValidation.passwordMinLength) {
-      setErrorMessage("Password must be at least 8 characters.");
-      return;
-    }
-    if (authValidation.passwordInvalidChars.test(password)) {
-      setErrorMessage(
-        "Password cannot contain commas, brackets, parentheses, spaces, or backtick (`)."
-      );
-      return;
-    }
-    if (!authValidation.passwordHasSymbol(password)) {
-      setErrorMessage("Password must include at least one special symbol.");
-      return;
-    }
+
     if (!loginRole) {
       setErrorMessage("Role is required.");
       return;
     }
 
     setIsSubmitting(true);
+
     try {
       const result = await login(email, password, loginRole);
+
       if (result.success) {
         router.push("/profile");
         return;
       }
-      setErrorMessage(
-        result.error ?? "Login failed. Please check your email and password."
-      );
+
+      const err = (result.error ?? "").trim();
+
+      if (err.startsWith("Cannot reach server")) {
+        setErrorMessage(err);
+      } else if (isRoleMismatchApiMessage(err)) {
+        setErrorMessage("Could not find the user with this role.");
+      } else {
+        setErrorMessage("Email or password is incorrect.");
+      }
     } catch {
       setErrorMessage("Login failed. Please try again.");
     } finally {
@@ -234,4 +283,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
