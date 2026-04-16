@@ -8,7 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, authValidation, isAdmin } from "@/lib/auth-context";
+import { useAuth, isAdmin } from "@/lib/auth-context";
+
+/** Maps backend role-mismatch errors to a single user-facing message. */
+function isRoleMismatchApiMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  if (!m.includes("role")) return false;
+  return (
+    m.includes("not found") ||
+    m.includes("could not find") ||
+    m.includes("no user") ||
+    m.includes("wrong role") ||
+    m.includes("incorrect role") ||
+    m.includes("mismatch") ||
+    (m.includes("find") && m.includes("user"))
+  );
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -37,6 +52,11 @@ export default function SignupPage() {
 
   const hasMinLength = password.length >= 8;
   const hasSymbol = /[!@#$%^&*(),.?":{}|<>_\-\\[\]/+=~]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const meetsPasswordRequirements = hasMinLength && hasSymbol && hasNumber;
+
+  const passwordRequirementsMessage =
+    "Password must include at least one number and one special character.";
 
   // Regular expression to disallow commas, brackets, and spaces
   const invalidPasswordChars = /[,\[\]\(\)\s`]/;
@@ -45,12 +65,8 @@ export default function SignupPage() {
   if (password.length > 0) {
     if (invalidPasswordChars.test(password)) {
       passwordMessage = "Password cannot contain commas, brackets, parentheses, spaces, or backtick (`).";
-    } else if (!hasMinLength && !hasSymbol) {
-      passwordMessage = "Password must be at least 8 characters and include a special symbol.";
-    } else if (!hasMinLength) {
-      passwordMessage = "Password must be at least 8 characters.";
-    } else if (!hasSymbol) {
-      passwordMessage = "Password must include at least one special symbol.";
+    } else if (!meetsPasswordRequirements) {
+      passwordMessage = passwordRequirementsMessage;
     }
   }
 
@@ -66,14 +82,6 @@ export default function SignupPage() {
       setErrorMessage("Email is required.");
       return;
     }
-   {/* if (!phone.trim()) {
-      setErrorMessage("Phone number is required.");
-      return;
-    }
-    if (phone.length !== 11 || !/^\d{11}$/.test(phone)) {
-      setErrorMessage("Phone number must be exactly 11 digits.");
-      return;
-    }}  */} 
     if (!password.trim()) {
       setErrorMessage("Password is required.");
       return;
@@ -95,15 +103,9 @@ export default function SignupPage() {
       return;
     }
     if (invalidPasswordChars.test(password)) {
-      setErrorMessage(
-        "Password cannot contain commas, brackets, parentheses, spaces, or backtick (`)."
-      );
       return;
     }
-    if (!hasMinLength || !hasSymbol) {
-      setErrorMessage(
-        "Password must be at least 8 characters and include a special symbol."
-      );
+    if (!meetsPasswordRequirements) {
       return;
     }
 
@@ -126,7 +128,12 @@ export default function SignupPage() {
         await logout();
         setTimeout(() => router.push("/login"), 1500);
       } else {
-        setErrorMessage(result.error ?? "Signup failed. Please try again.");
+        const err = result.error ?? "Signup failed. Please try again.";
+        setErrorMessage(
+          isRoleMismatchApiMessage(err)
+            ? "Could not find the user with this role."
+            : err
+        );
       }
     } catch {
       setErrorMessage("Signup failed. Please try again.");
