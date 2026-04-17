@@ -3,6 +3,27 @@ export const API_BASE =
   process.env.NEXT_PUBLIC_URL ??
   "http://localhost:3001";
 
+const API_REACHABILITY_TIMEOUT_MS = 8000;
+
+/** True if the API accepts a connection (any HTTP response counts). */
+export async function isApiReachable(): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_REACHABILITY_TIMEOUT_MS);
+  try {
+    await fetch(`${API_BASE}/api/auth/me`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function readJsonSafe<T>(res: Response): Promise<T | null> {
   try {
     return (await res.json()) as T;
