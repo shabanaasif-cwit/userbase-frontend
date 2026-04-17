@@ -6,9 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import WelcomeCTA from "./component/welcome-cta"
+import WelcomeCTA from "@/app/component/welcome-cta"
 
-export const revalidate = 3600 // ISR: revalidate home every hour
+export const dynamic = "force-dynamic"
 
 const highlights = [
   {
