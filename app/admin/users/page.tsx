@@ -42,8 +42,21 @@ const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 const ROLE_OPTIONS = [ROLES.USER, ROLES.ADMIN];
 const STATUS_OPTIONS = ["active", "deactivated"] as const;
 
+function toTitleCase(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function getUserDisplayName(user: ManagedUser) {
-  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  const fullName = [user.firstName, user.lastName]
+    .filter(Boolean)
+    .map((part) => toTitleCase(part as string))
+    .join(" ")
+    .trim();
   return fullName || user.name || user.email;
 }
 

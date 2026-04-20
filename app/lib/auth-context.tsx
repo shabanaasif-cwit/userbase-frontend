@@ -153,7 +153,7 @@ export async function fetchUsersFromAPI(
     const errorMsg = e instanceof Error ? e.message : "Unknown error";
     return {
       success: false,
-      error: `Cannot reach server: ${errorMsg}`,
+      error: `Cannot reach. Please try again later.: ${errorMsg}`,
     };
   }
 }
@@ -188,7 +188,7 @@ export async function updateUserRoleAPI(
     return { success: true };
   } catch (e) {
     const errorMsg = e instanceof Error ? e.message : "Unknown error";
-    return { success: false, error: `Cannot reach server: ${errorMsg}` };
+    return { success: false, error: `Cannot reach. Please try again later.: ${errorMsg}` };
   }
 }
 
@@ -261,7 +261,7 @@ export async function updateUserStatusAPI(
     return { success: true };
   } catch (e) {
     const errorMsg = e instanceof Error ? e.message : "Unknown error";
-    return { success: false, error: `Cannot reach server: ${errorMsg}` };
+    return { success: false, error: `Cannot reach. Please try again later.: ${errorMsg}` };
   }
 }
 
@@ -450,7 +450,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         return {
           success: false,
-          error: "Cannot reach server. Is the API running on " + API_BASE + "?",
+          error: "Cannot reach. Please try again later.",
         };
       }
     },
@@ -590,7 +590,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         return { success: true };
       } catch {
-        return { success: false, error: "Cannot reach server." };
+        return { success: false, error: "Cannot reach. Please try again later." };
       }
     },
     [accessToken]

@@ -121,7 +121,7 @@ export default function LoginPage() {
 
       const err = (result.error ?? "").trim();
 
-      if (err.startsWith("Cannot reach server")) {
+      if (err.startsWith("Cannot reach. Please try again later.")) {
         setErrorMessage(err);
       } else if (isRoleMismatchApiMessage(err)) {
         setErrorMessage("Could not find the user with this role.");
