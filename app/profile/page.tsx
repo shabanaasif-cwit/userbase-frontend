@@ -115,7 +115,7 @@ export default function ProfilePage() {
   const initials = getInitials(profile?.firstName || profile?.lastName, profile?.email);
    // Use firstName and lastName if available
   const displayName = user?.firstName && user?.lastName
-    ? `${user.firstName} ${user.lastName}`
+    ? `${toTitleCase(user.firstName)} ${toTitleCase(user.lastName)}`
     : getDisplayName(profile?.firstName || profile?.lastName, profile?.email);  // Fallback to the old method if firstName/lastName are not available.
 
   const viewAllPath = admin ? "/admin/notifications" : "/notifications";
