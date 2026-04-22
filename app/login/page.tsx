@@ -17,7 +17,7 @@ import {
 } from "@/lib/auth-context";
 
 /** Maps backend “unknown email” errors to a single user-facing message. */
-function isEmailNotFoundApiMessage(message: string): boolean {
+export function isEmailNotFoundApiMessage(message: string): boolean {
   const m = message.toLowerCase();
   if (m.includes("password") || m.includes("credential")) return false;
 
@@ -63,6 +63,15 @@ function isRoleMismatchApiMessage(message: string): boolean {
     m.includes("role mismatch") ||
     m.includes("mismatch") ||
     (m.includes("find") && m.includes("user"))
+  );
+}
+
+/** Maps backend deactivated-user errors to the requested user-facing message. */
+function isDeactivatedApiMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    (m.includes("deactivated") || m.includes("inactive") || m.includes("disabled")) &&
+    (m.includes("user") || m.includes("account"))
   );
 }
 
@@ -123,6 +132,8 @@ export default function LoginPage() {
 
       if (err.startsWith("Cannot reach. Please try again later.")) {
         setErrorMessage(err);
+      } else if (isDeactivatedApiMessage(err)) {
+        setErrorMessage("User is deactivated.");
       } else if (isRoleMismatchApiMessage(err)) {
         setErrorMessage("Could not find the user with this role.");
       } else {

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth, isAdmin } from "@/lib/auth-context";
+import { useAuth, isAdmin, authValidation } from "@/lib/auth-context";
 
 /** Maps backend role-mismatch errors to a single user-facing message. */
 function isRoleMismatchApiMessage(message: string): boolean {
@@ -50,13 +50,15 @@ export default function SignupPage() {
   const [isToastVisible, setIsToastVisible] = useState(false); // Toast visibility state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const hasMinLength = password.length >= 8;
+  const hasMinLength = password.length >= authValidation.passwordMinLength;
+  const hasMaxLength = password.length <= authValidation.passwordMaxLength;
   const hasSymbol = /[!@#$%^&*(),.?":{}|<>_\-\\[\]/+=~]/.test(password);
   const hasNumber = /\d/.test(password);
-  const meetsPasswordRequirements = hasMinLength && hasSymbol && hasNumber;
+  const meetsPasswordRequirements = hasSymbol && hasNumber;
 
   const passwordRequirementsMessage =
     "Password must include at least one number and one special character.";
+  const passwordLengthMessage = `Password length must be between ${authValidation.passwordMinLength} and ${authValidation.passwordMaxLength} characters.`;
 
   // Regular expression to disallow commas, brackets, and spaces
   const invalidPasswordChars = /[,\[\]\(\)\s`]/;
@@ -65,6 +67,8 @@ export default function SignupPage() {
   if (password.length > 0) {
     if (invalidPasswordChars.test(password)) {
       passwordMessage = "Password cannot contain commas, brackets, parentheses, spaces, or backtick (`).";
+    } else if (!hasMinLength || !hasMaxLength) {
+      passwordMessage = passwordLengthMessage;
     } else if (!meetsPasswordRequirements) {
       passwordMessage = passwordRequirementsMessage;
     }
@@ -103,6 +107,10 @@ export default function SignupPage() {
       return;
     }
     if (invalidPasswordChars.test(password)) {
+      return;
+    }
+    if (!hasMinLength || !hasMaxLength) {
+      setErrorMessage(passwordLengthMessage);
       return;
     }
     if (!meetsPasswordRequirements) {

@@ -623,6 +623,7 @@ export const authValidation = {
   emailFormat: (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),
   passwordMinLength: 8,
+  passwordMaxLength: 64,
   passwordHasSymbol: (password: string) =>
     /[!@#$%^&*(),.?":{}|<>_\-\\[\]/+=~]/.test(password),
   passwordInvalidChars: /[,\[\]\(\)\s`]/,
