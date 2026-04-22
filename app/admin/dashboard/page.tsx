@@ -18,7 +18,7 @@ export default function AdminDashboardPage() {
     <div className="min-h-full bg-zinc-950 font-sans text-white">
       <main className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
         {/* Hero: compact and modern */}
-        <header className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-900/90 via-zinc-900/50 to-transparent px-6 py-10 sm:px-8 sm:py-12">
+        <header className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-800/90 via-zinc-900/50 to-transparent px-6 py-10 sm:px-8 sm:py-12">
           <div className="absolute right-0 top-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-sky-500/10 blur-3xl" />
           <div className="absolute bottom-0 left-0 h-48 w-48 -translate-x-1/3 translate-y-1/3 rounded-full bg-emerald-500/10 blur-3xl" />
           <div className="relative">

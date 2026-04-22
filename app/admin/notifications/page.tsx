@@ -511,7 +511,7 @@ function NotificationForm({
       </div>
       <div className="grid gap-2">
         <Label htmlFor="notif-message" className="text-zinc-200">
-          Message
+          Message <span className="text-red-400" aria-hidden="true">*</span>
         </Label>
         <Textarea
           id="notif-message"
