@@ -221,7 +221,7 @@ const Header: FC<HeaderProps> = ({
 
   const displayCount = useMemo(() => {
     if (notificationCount <= 0) return "0";
-    if (notificationCount > 9) return "9+";
+    if (notificationCount > 99) return "99+";
     return String(notificationCount);
   }, [notificationCount]);
 
@@ -377,7 +377,7 @@ const Header: FC<HeaderProps> = ({
                   {/* desktop only */}
                       <button
                         type="button"
-                        className="relative inline-flex items-center gap-2 transition-transform duration-200 hover:scale-110"
+                        className={`${navLinkClass} relative`}
                         onClick={() => setIsNotificationsOpen((prev) => !prev)}
                         aria-label="Notifications"
                         title="Notifications"
@@ -787,7 +787,7 @@ const Header: FC<HeaderProps> = ({
                         <AlarmClock className="h-4 w-4" />
                         {reminderCount > 0 && (
                           <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
-                            {reminderCount > 9 ? "9+" : reminderCount}
+                            {reminderCount > 99 ? "99+" : reminderCount}
                           </span>
                         )}
                       </span>

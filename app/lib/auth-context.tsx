@@ -11,6 +11,8 @@ import {
 import { API_BASE, authHeaders, readJsonSafe } from "./api-config";
 import { clearReadReminderSession } from "./reminder-read-session";
 
+const AUTH_STORAGE_KEY = "userbase:auth-session";
+
 export type ManagedUser = {
   id: string;
   email: string;
@@ -274,6 +276,11 @@ export type AuthUser = {
 
 type AuthLoginResult = { success: boolean; error?: string };
 
+type PersistedAuthSession = {
+  user: AuthUser;
+  accessToken: string | null;
+};
+
 type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -315,6 +322,115 @@ function mapMeUser(raw: Record<string, unknown>): AuthUser | null {
   return { email, role, firstName: raw.firstName as string | undefined, lastName: raw.lastName as string | undefined };
 }
 
+function getNestedRecord(
+  value: unknown
+): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function extractMePayload(json: Record<string, unknown>): {
+  user: Record<string, unknown> | null;
+  accessToken: string | null;
+} {
+  const topLevelUser = getNestedRecord(json.user);
+  const data = getNestedRecord(json.data);
+  const dataUser = getNestedRecord(data?.user);
+  const nestedData = getNestedRecord(data?.data);
+  const nestedDataUser = getNestedRecord(nestedData?.user);
+
+  const user =
+    topLevelUser ??
+    dataUser ??
+    nestedDataUser ??
+    data ??
+    nestedData ??
+    json;
+
+  const accessTokenCandidates = [
+    json.accessToken,
+    topLevelUser?.accessToken,
+    data?.accessToken,
+    dataUser?.accessToken,
+    nestedData?.accessToken,
+    nestedDataUser?.accessToken,
+  ];
+
+  const accessToken =
+    accessTokenCandidates.find(
+      (candidate): candidate is string =>
+        typeof candidate === "string" && candidate.trim().length > 0
+    ) ?? null;
+
+  return { user, accessToken };
+}
+
+function normalizeStoredUser(raw: unknown): AuthUser | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+
+  const record = raw as Record<string, unknown>;
+  const email = String(record.email ?? "").trim().toLowerCase();
+  if (!email) return null;
+
+  return {
+    email,
+    role:
+      String(record.role ?? "").toLowerCase() === ROLES.ADMIN
+        ? ROLES.ADMIN
+        : ROLES.USER,
+    firstName:
+      typeof record.firstName === "string"
+        ? record.firstName.trim() || undefined
+        : undefined,
+    lastName:
+      typeof record.lastName === "string"
+        ? record.lastName.trim() || undefined
+        : undefined,
+  };
+}
+
+function readStoredAuthSession(): PersistedAuthSession | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as {
+      user?: unknown;
+      accessToken?: unknown;
+    };
+    const user = normalizeStoredUser(parsed.user);
+    if (!user) return null;
+
+    return {
+      user,
+      accessToken:
+        typeof parsed.accessToken === "string" && parsed.accessToken.trim()
+          ? parsed.accessToken
+          : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function persistAuthSession(session: PersistedAuthSession | null) {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (!session?.user) {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      return;
+    }
+
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // Ignore storage failures so auth UX still works.
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -322,46 +438,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    const storedSession = readStoredAuthSession();
+
+    if (storedSession) {
+      setUser(storedSession.user);
+      setAccessToken(storedSession.accessToken);
+    }
+
     (async () => {
       try {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
           method: "GET",
-          headers: authHeaders(null),
+          headers: authHeaders(storedSession?.accessToken ?? null),
           credentials: "include",
         });
         if (cancelled) return;
         if (res.ok) {
           const json =
             (await readJsonSafe<Record<string, unknown>>(res)) ?? {};
-          const raw =
-            (json.user as Record<string, unknown>) ??
-            (json.data as Record<string, unknown>) ??
-            json;
-          const u = mapMeUser(raw);
-          const token =
-            typeof json.accessToken === "string"
-              ? json.accessToken
-              : typeof (raw as { accessToken?: string }).accessToken ===
-                  "string"
-                ? (raw as { accessToken: string }).accessToken
-                : null;
+          const { user: rawUser, accessToken: token } = extractMePayload(json);
+          const u = rawUser ? mapMeUser(rawUser) : null;
           if (u) {
             setUser(u);
-            setAccessToken(token);
+            setAccessToken(token ?? storedSession?.accessToken ?? null);
           } 
           //Ensures that if the user data is invalid, the state is cleared
-          else {
+          else if (!storedSession) {
             setUser(null);
             setAccessToken(null);
           }
         } 
         //if the API request fails
-        else {
+        else if (!storedSession) {
           setUser(null);
           setAccessToken(null);
         }
       } catch {
-        if (!cancelled) {
+        if (!cancelled && !storedSession) {
           setUser(null);
           setAccessToken(null);
         }
@@ -373,6 +486,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    persistAuthSession(
+      user
+        ? {
+            user,
+            accessToken,
+          }
+        : null
+    );
+  }, [accessToken, mounted, user]);
 
   const login = useCallback(
     async (
@@ -475,7 +601,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ) {
         return { success: false, error: "Signup failed. Please try again." };
       }
-      //refers to actual data that is transmitted as a part of reuest or reponse
+      //refers to actual data that is transmitted as a part of request or reponse
       const payload = {
         firstName: data.firstName?.trim(),
         lastName: data.lastName?.trim(),
@@ -557,6 +683,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearReadReminderSession(email);
     setUser(null);
     setAccessToken(null);
+    persistAuthSession(null);
   }, [accessToken, user?.email]);
 
   const updateName = useCallback(
