@@ -12,6 +12,7 @@ export type StoredNotification = {
   message: string;
   targetType: NotificationTargetType;
   targetUserIds?: string[];
+  createdBy?: string;
   createdAt: string;
   updatedAt?: string;
 };
@@ -53,6 +54,39 @@ function pickId(raw: Record<string, unknown>): string {
   return "";
 }
 
+function pickCreatorId(raw: Record<string, unknown>): string | undefined {
+  const direct =
+    raw.createdById ??
+    raw.createdBy ??
+    raw.creatorId ??
+    raw.adminId ??
+    raw.userId;
+
+  if (typeof direct === "string" && direct.trim()) return direct;
+
+  if (direct && typeof direct === "object") {
+    const directRecord = direct as Record<string, unknown>;
+    if (
+      typeof directRecord.email === "string" &&
+      directRecord.email.trim()
+    ) {
+      return directRecord.email;
+    }
+
+    if (
+      typeof directRecord.userId === "string" &&
+      directRecord.userId.trim()
+    ) {
+      return directRecord.userId;
+    }
+
+    const nestedId = pickId(directRecord);
+    if (nestedId) return nestedId;
+  }
+
+  return undefined;
+}
+
 function mapApiToStored(raw: Record<string, unknown>): StoredNotification | null {
   const id = pickId(raw);
   if (!id) return null;
@@ -75,6 +109,7 @@ function mapApiToStored(raw: Record<string, unknown>): StoredNotification | null
       : Array.isArray(raw.targetUserIds)
         ? (raw.targetUserIds as string[])
         : undefined,
+    createdBy: pickCreatorId(raw),
     createdAt:
       typeof raw.createdAt === "string"
         ? raw.createdAt
@@ -393,6 +428,7 @@ export type ReminderItem = {
   isRead: boolean;
   myRead?: boolean;
   isRecipient?: boolean;
+  createdBy?: string;
   createdAt?: string;
 };
 
@@ -430,6 +466,7 @@ function mapReminderRow(row: unknown): ReminderItem | null {
             : undefined,
     isRecipient:
       typeof r.isRecipient === "boolean" ? r.isRecipient : undefined,
+    createdBy: pickCreatorId(r),
     createdAt: typeof r.createdAt === "string" ? r.createdAt : undefined,
   };
 }

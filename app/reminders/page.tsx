@@ -332,6 +332,12 @@ export default function RemindersPage() {
                             </p>
                           ) : null}
 
+                          {user?.role?.toLowerCase() === "admin" && item.createdBy ? (
+                            <p className="mt-2 text-xs text-zinc-500">
+                              Created by: {item.createdBy}
+                            </p>
+                          ) : null}
+
                           <p className="mt-2 text-xs text-zinc-500">
                             {formatRelative(item.createdAt)}
                           </p>
