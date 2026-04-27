@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   AlarmClock,
+  BellRing,
   CheckCheck,
   ChevronLeft,
   ChevronRight,
@@ -57,6 +58,7 @@ export default function RemindersPage() {
   const router = useRouter();
   const { user, isAuthenticated, isReady, accessToken } = useAuth();
   const [reminders, setReminders] = useState<ReminderItem[]>([]);
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
   const [pagination, setPagination] =
     useState<ReminderListMeta>(DEFAULT_PAGINATION);
   const [loadError, setLoadError] = useState("");
@@ -70,17 +72,45 @@ export default function RemindersPage() {
   );
   const limit = 10;
   
-  const updateReminderCount = useCallback((items: ReminderItem[]) => {
-    const unread = items.filter(
-      (r) => r.isRecipient !== false && !isReminderRead(r, user?.email)
-    ).length;
+  const updateReminderCount = useCallback(async () => {
+    if (!isAuthenticated || !user?.email) {
+      setTotalUnreadCount(0);
+      localStorage.setItem("reminderUnreadCount", "0");
+      window.dispatchEvent(
+        new CustomEvent("reminder-count-updated", {
+          detail: { count: 0 },
+        })
+      );
+      return;
+    }
+
+    let unread = 0;
+    let currentPage = 1;
+    let totalPages = 1;
+
+    do {
+      const { ok, items, meta } = await fetchReminders(accessToken, {
+        page: currentPage,
+        limit: 100,
+      });
+
+      if (!ok) return;
+
+      unread += items.filter(
+        (r) => r.isRecipient !== false && !isReminderRead(r, user.email)
+      ).length;
+      totalPages = meta.totalPages;
+      currentPage += 1;
+    } while (currentPage <= totalPages);
+
+    setTotalUnreadCount(unread);
     localStorage.setItem("reminderUnreadCount", String(unread));
     window.dispatchEvent(
       new CustomEvent("reminder-count-updated", {
         detail: { count: unread },
       })
     );
-  }, [user?.email]);
+  }, [accessToken, isAuthenticated, user?.email]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -134,7 +164,7 @@ export default function RemindersPage() {
   }, [page, pagination.totalPages]);
 
   useEffect(() => {
-    updateReminderCount(reminders);
+    void updateReminderCount();
   }, [reminders, updateReminderCount]);
 
   const handleMarkRead = async (id: string) => {
@@ -185,12 +215,6 @@ export default function RemindersPage() {
     );
   }
 
-  const unreadCount = reminders.filter(
-    (r) => r.isRecipient !== false && !isReminderRead(r, user?.email)
-  ).length;
-  const hasUnreadOnPage = reminders.some(
-    (r) => r.isRecipient !== false && !isReminderRead(r, user?.email)
-  );
   const resultLabel =
     pagination.total === 1 ? "1 reminder" : `${pagination.total} reminders`;
 
@@ -218,9 +242,9 @@ export default function RemindersPage() {
                 {loadError && (
                   <p className="mt-2 text-sm text-red-400">{loadError}</p>
                 )}
-                {unreadCount > 0 && (
+                {totalUnreadCount > 0 && (
                   <span className="mt-3 inline-flex items-center rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-300 ring-1 ring-amber-500/25">
-                    {unreadCount} unread on this page
+                    {totalUnreadCount} total unread reminders
                   </span>
                 )}
               </div>
@@ -377,6 +401,7 @@ export default function RemindersPage() {
             href="/notifications"
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
           >
+            <BellRing className="h-4 w-4" />
             Notifications
           </Link>
 

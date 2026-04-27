@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth-context";
-import { Bell, Users, ArrowRight, LayoutDashboard } from "lucide-react";
+import { Bell, Users, ArrowRight, ArrowLeft } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -17,11 +17,20 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-full bg-zinc-950 font-sans text-white">
       <main className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+        <Link
+          href="/dashboard"
+          className="mb-2 mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-200 shadow-[0_0_24px_rgba(16,185,129,0.18)] transition hover:border-emerald-300/30 hover:bg-emerald-500/15 hover:text-emerald-100"
+        >
+          <span className="flex h-6 w-6 items-center justify-center rounded-full border border-emerald-300/20 bg-white/10">
+            <ArrowLeft className="h-3.5 w-3.5" />
+          </span>
+          Back to Dashboard
+        </Link>
         {/* Hero: compact and modern */}
         <header className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-zinc-800/90 via-zinc-900/50 to-transparent px-6 py-10 sm:px-8 sm:py-12">
           <div className="absolute right-0 top-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-sky-500/10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-48 w-48 -translate-x-1/3 translate-y-1/3 rounded-full bg-emerald-500/10 blur-3xl" />
           <div className="relative">
+            <div className="absolute bottom-0 left-0 h-48 w-48 -translate-x-1/3 translate-y-1/3 rounded-full bg-emerald-500/10 blur-3xl" />
             <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">
               Admin
             </p>
@@ -104,15 +113,6 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        <p className="mt-10 flex justify-center">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
-        </p>
       </main>
     </div>
   );
