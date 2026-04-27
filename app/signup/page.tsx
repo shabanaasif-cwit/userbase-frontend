@@ -49,6 +49,8 @@ export default function SignupPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isToastVisible, setIsToastVisible] = useState(false); // Toast visibility state
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [firstNameError, setFirstNameError] = useState("");
+  const [lastNameError, setLastNameError] = useState("");
 
   const hasMinLength = password.length >= authValidation.passwordMinLength;
   const hasMaxLength = password.length <= authValidation.passwordMaxLength;
@@ -59,6 +61,9 @@ export default function SignupPage() {
   const passwordRequirementsMessage =
     "Password must include at least one number and one special character.";
   const passwordLengthMessage = `Password length must be between ${authValidation.passwordMinLength} and ${authValidation.passwordMaxLength} characters.`;
+  const invalidNameChars = /[^A-Za-z\s]/;
+  const invalidNameMessage =
+    "First name and last name cannot contain special characters or numbers.";
 
   // Regular expression to disallow commas, brackets, and spaces
   const invalidPasswordChars = /[,\[\]\(\)\s`]/;
@@ -77,9 +82,16 @@ export default function SignupPage() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMessage("");
+    setFirstNameError("");
+    setLastNameError("");
 
     if (!firstName.trim() || !lastName.trim()) {
       setErrorMessage("First name and last name are required.");
+      return;
+    }
+    if (invalidNameChars.test(firstName) || invalidNameChars.test(lastName)) {
+      if (invalidNameChars.test(firstName)) setFirstNameError(invalidNameMessage);
+      if (invalidNameChars.test(lastName)) setLastNameError(invalidNameMessage);
       return;
     }
     if (!email.trim()) {
@@ -193,10 +205,21 @@ export default function SignupPage() {
                     type="text"
                     placeholder="Enter your first Name"
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    onChange={(e) => {
+                      const nextValue = e.target.value;
+                      if (invalidNameChars.test(nextValue)) {
+                        setFirstNameError(invalidNameMessage);
+                      } else {
+                        setFirstNameError("");
+                      }
+                      setFirstName(nextValue);
+                    }}
                     required
                     className="input-field"
                   />
+                  {firstNameError && (
+                    <p className="text-sm text-red-400">{firstNameError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-slate-200">
@@ -207,10 +230,21 @@ export default function SignupPage() {
                     type="text"
                     placeholder="Enter your last Name"
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    onChange={(e) => {
+                      const nextValue = e.target.value;
+                      if (invalidNameChars.test(nextValue)) {
+                        setLastNameError(invalidNameMessage);
+                      } else {
+                        setLastNameError("");
+                      }
+                      setLastName(nextValue);
+                    }}
                     required
                     className="input-field"
                   />
+                  {lastNameError && (
+                    <p className="text-sm text-red-400">{lastNameError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-slate-200">
