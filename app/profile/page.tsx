@@ -148,24 +148,8 @@ export default function ProfilePage() {
                   </p>
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3">
-                {[{ label: "Active workspaces", value: "04" }, { label: "Automation score", value: "92%" }, { label: "Focus streak", value: "18 days" }].map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.label}</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{item.value}</p>
-                  </div>
-                ))}
-              </div>
             </div>
             <div className="flex flex-col gap-3 lg:items-end">
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-cyan-100">
-                Verified identity
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs text-slate-200">
-                {["Zero-trust ready", "SLA: 99.9%", "SOC2 aligned"].map((badge) => (
-                  <span key={badge} className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{badge}</span>
-                ))}
-              </div>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link href="/dashboard">
                   <Button className="cursor-pointer bg-cyan-400 text-slate-900 hover:bg-cyan-300">Jump to dashboard</Button>
@@ -268,38 +252,6 @@ export default function ProfilePage() {
                   </Link>
                 </div>
               </div>
-              {[
-                {
-                  title: "Security posture updated",
-                  detail: "New MFA policy applied to all admin roles.",
-                  time: "2 hours ago",
-                },
-                {
-                  title: "Team access approved",
-                  detail: "Onboarded to Product Ops with editor rights.",
-                  time: "Yesterday",
-                },
-                {
-                  title: "Audit exported",
-                  detail: "Compliance report generated and shared.",
-                  time: "Last week",
-                },
-              ].map((item) => (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-4"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-base font-semibold text-white">
-                      {item.title}
-                    </p>
-                    <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                      {item.time}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-300">{item.detail}</p>
-                </div>
-              ))}
             </CardContent>
           </Card>
 
@@ -330,23 +282,6 @@ export default function ProfilePage() {
                         {profile.role}
                       </span>
                     </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                      Preferences
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {["Weekly digest", "Beta features", "Audit alerts"].map(
-                        (pref) => (
-                          <span
-                            key={pref}
-                            className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs"
-                          >
-                            {pref}
-                          </span>
-                        )
-                      )}
-                    </div>
                   </div>
                 </div>
               ) : (

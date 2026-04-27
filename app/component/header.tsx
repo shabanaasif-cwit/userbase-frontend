@@ -186,13 +186,11 @@ const Header: FC<HeaderProps> = ({
 
   useEffect(() => {
     const syncReminderCount = () => {
-      const saved = localStorage.getItem("reminderUnreadCount");
-      setReminderCount(Number(saved || 0));
+      void loadReminderCount();
     };
 
-    const handleReminderCountUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent<{ count: number }>;
-      setReminderCount(customEvent.detail?.count || 0);
+    const handleReminderCountUpdate = () => {
+      void loadReminderCount();
     };
 
     syncReminderCount();
@@ -207,7 +205,7 @@ const Header: FC<HeaderProps> = ({
       );
       window.removeEventListener("storage", syncReminderCount);
     };
-  }, []);
+  }, [loadReminderCount]);
 
   const navLinkClass =
     "inline-flex items-center justify-center transition-all duration-200 hover:scale-110 hover:text-gray-400 hover:underline underline-offset-4";
@@ -494,7 +492,7 @@ const Header: FC<HeaderProps> = ({
                     <AlarmClock />
                     {reminderCount > 0 && (
                       <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
-                        {reminderCount > 99 ? "99+" : reminderCount}
+                        {reminderCount}
                       </span>
                     )}
                   </Link>
@@ -787,7 +785,7 @@ const Header: FC<HeaderProps> = ({
                         <AlarmClock className="h-4 w-4" />
                         {reminderCount > 0 && (
                           <span className="absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white">
-                            {reminderCount > 99 ? "99+" : reminderCount}
+                            {reminderCount}
                           </span>
                         )}
                       </span>
