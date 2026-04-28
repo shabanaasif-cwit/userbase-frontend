@@ -4,6 +4,7 @@
  */
 
 const READ_NOTIFICATION_IDS_KEY = "userbase:notification-read-ids:";
+export const NOTIFICATION_READ_UPDATED_EVENT = "notification-read-updated";
 
 export function persistedReadIdsStorageKey(userEmail: string): string {
   return `${READ_NOTIFICATION_IDS_KEY}${encodeURIComponent(userEmail.trim().toLowerCase())}`;
@@ -33,6 +34,11 @@ export function persistReadNotificationIds(
     localStorage.setItem(
       persistedReadIdsStorageKey(userEmail),
       JSON.stringify([...existing])
+    );
+    window.dispatchEvent(
+      new CustomEvent(NOTIFICATION_READ_UPDATED_EVENT, {
+        detail: { userEmail, ids },
+      })
     );
   } catch {
     /* quota or private mode */

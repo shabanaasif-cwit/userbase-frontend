@@ -75,6 +75,25 @@ function isDeactivatedApiMessage(message: string): boolean {
   );
 }
 
+/** Maps backend single-session errors to the requested user-facing message. */
+function isAlreadyLoggedInApiMessage(message: string): boolean {
+  const m = message.toLowerCase().replace(/\s+/g, " ").trim();
+  return [
+    "session is already logged in.",
+    "session is already logged in",
+    "session already logged in.",
+    "session already logged in",
+    "user is already logged in.",
+    "user is already logged in",
+    "already logged in on another device.",
+    "already logged in on another device",
+    "already has an active session.",
+    "already has an active session",
+    "active session already exists.",
+    "active session already exists",
+  ].includes(m);
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated, isReady, role } = useAuth();
@@ -132,6 +151,8 @@ export default function LoginPage() {
 
       if (err.startsWith("Cannot reach. Please try again later.")) {
         setErrorMessage(err);
+      } else if (isAlreadyLoggedInApiMessage(err)) {
+        setErrorMessage("Session is already logged in.");
       } else if (isDeactivatedApiMessage(err)) {
         setErrorMessage("User is deactivated.");
       } else if (isRoleMismatchApiMessage(err)) {

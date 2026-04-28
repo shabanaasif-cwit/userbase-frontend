@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   mergeWithPersistedReadState,
+  NOTIFICATION_READ_UPDATED_EVENT,
   persistReadNotificationIds,
 } from "@/lib/notification-read-persistence";
 import {
@@ -155,6 +156,25 @@ const Header: FC<HeaderProps> = ({
     if (!isAuthenticated || !userEmail) return;
     void loadNotifications();
   }, [isAuthenticated, isNotificationsOpen, loadNotifications, pathname, userEmail]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !userEmail) return;
+
+    const syncNotifications = () => {
+      void loadNotifications();
+    };
+
+    window.addEventListener(NOTIFICATION_READ_UPDATED_EVENT, syncNotifications);
+    window.addEventListener("storage", syncNotifications);
+
+    return () => {
+      window.removeEventListener(
+        NOTIFICATION_READ_UPDATED_EVENT,
+        syncNotifications
+      );
+      window.removeEventListener("storage", syncNotifications);
+    };
+  }, [isAuthenticated, loadNotifications, userEmail]);
 
   useEffect(() => {
     if (!isAuthenticated || !userEmail) return;
