@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  ArrowLeft,
   Bell,
   CheckCheck,
   ChevronRight,
@@ -131,7 +132,6 @@ export default function NotificationsPage() {
       {/* Subtle background gradient */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-zinc-950 via-zinc-950/98 to-zinc-900" />
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(56,189,248,0.08),transparent)]" />
-
       <main className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
         {/* Hero */}
         <header className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-zinc-900/80 shadow-xl shadow-black/20 backdrop-blur-sm">
@@ -139,6 +139,14 @@ export default function NotificationsPage() {
           <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl" />
           <div className="relative flex flex-col gap-6 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
             <div className="flex items-start gap-5">
+               <Link
+                href="/dashboard"
+                className="mb-0 mt-1 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-sky-200 hover:border-sky-300/30 hover:bg-sky-500/15 hover:text-sky-100"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-sky-300/20 bg-white/10">
+                  <ArrowLeft className="h-5.0 w-5.5 inline-block ml-0" />
+                </span>
+              </Link>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-sky-400/25 bg-gradient-to-br from-sky-500/30 via-sky-500/20 to-indigo-500/15 text-sky-300 shadow-lg shadow-sky-500/20 ring-1 ring-sky-400/20">
                 <Bell className="h-7 w-7" strokeWidth={1.75} />
               </div>
@@ -254,22 +262,6 @@ export default function NotificationsPage() {
             )}
           </CardContent>
         </Card>
-
-        <p className="mt-10 flex flex-wrap justify-center gap-4">
-          <Link
-            href="/reminders"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-200"
-          >
-            Reminders
-          </Link>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
-        </p>
       </main>
 
       {/* Detail modal */}
