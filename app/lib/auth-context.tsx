@@ -291,7 +291,8 @@ type AuthContextValue = {
   login: (
     email: string,
     password: string,
-    role?: string
+    role?: string,
+    rememberMe?: boolean
   ) => Promise<AuthLoginResult>;
   signup: (data: {
     firstName: string;
@@ -504,7 +505,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (
       email: string,
       password: string,
-      role?: string
+      role?: string,
+      rememberMe?: boolean
     ): Promise<AuthLoginResult> => {
       if (!email.trim() || !password || password.length < 8) {
         return { success: false, error: "Invalid email or password." };
@@ -523,6 +525,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: lowerEmail,
             password,
             role: roleForApi,
+            rememberMe,
           }),
         });
 

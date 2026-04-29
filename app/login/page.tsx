@@ -110,6 +110,7 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   /** Sent to API — backend expects `role` on login body */
   const [loginRole, setLoginRole] = useState<string>(ROLES.USER);
 
@@ -140,7 +141,12 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await login(email, password, loginRole);
+      const result = await login(
+        email,
+        password,
+        loginRole,
+        rememberMe
+      );
 
       if (result.success) {
         router.push("/profile");
@@ -279,7 +285,10 @@ export default function LoginPage() {
 
                 <div className="flex items-center justify-between text-sm text-slate-400">
                   <label className="flex items-center gap-2">
-                    <Checkbox />
+                    <Checkbox
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked === true)}
+                    />
                     Remember me
                   </label>
                   <Link
