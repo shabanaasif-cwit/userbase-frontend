@@ -2,11 +2,17 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import {
+  mergeWithPersistedReadState,
+  NOTIFICATION_READ_UPDATED_EVENT,
+} from "@/lib/notification-read-persistence"
+import { isReminderReadForSession } from "@/lib/reminder-read-session"
+import {
+  fetchReminders,
   fetchNotificationsForUser,
-  markNotificationsReadApi,
+  type ReminderItem,
   wasNotificationEdited,
 } from "@/lib/notifications-api"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -49,13 +55,6 @@ type NotificationItem = {
   isRead?: boolean
 }
 
-const stats = [
-  { label: "Active users", value: "1,248", note: "+18% this month" },
-  { label: "Roles", value: "24", note: "Granular access" },
-  { label: "Audit logs", value: "98%", note: "Coverage" },
-  { label: "Alerts", value: "7", note: "Review pending" },
-]
-
 const activity = [
   { name: "Ayesha Khan", action: "Role updated", time: "2m ago" },
   { name: "Dev Team", action: "New invite", time: "18m ago" },
@@ -70,33 +69,81 @@ export default function DashboardPage() {
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false)
   const [notificationError, setNotificationError] = useState("")
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([])
+  const [reminderSummary, setReminderSummary] = useState({ total: 0, unread: 0 })
 
-  useEffect(() => {
+  const loadNotifications = useCallback(async () => {
     if (!user?.email) {
+      setNotifications([])
+      setIsLoadingNotifications(false)
+      setNotificationError("")
+      return
+    }
+
+    setIsLoadingNotifications(true)
+    setNotificationError("")
+
+    const { ok, items, error } = await fetchNotificationsForUser(
+      accessToken,
+      { page: 1, limit: 20 }
+    )
+
+    setIsLoadingNotifications(false)
+
+    if (!ok) {
+      setNotificationError(error ?? "Could not load notifications")
       setNotifications([])
       return
     }
-    let cancelled = false
-    setIsLoadingNotifications(true)
-    setNotificationError("")
-    ;(async () => {
-      const { ok, items, error } = await fetchNotificationsForUser(
-        accessToken,
-        { page: 1, limit: 20 }
+
+    setNotifications(mergeWithPersistedReadState(items, user.email))
+  }, [accessToken, user?.email])
+
+  const loadReminderSummary = useCallback(async () => {
+    if (!user?.email) {
+      setReminderSummary({ total: 0, unread: 0 })
+      return
+    }
+
+    let total = 0
+    let unread = 0
+    let page = 1
+    let totalPages = 1
+
+    do {
+      const { ok, items, meta } = await fetchReminders(accessToken, {
+        page,
+        limit: 100,
+      })
+
+      if (!ok) return
+
+      const eligibleItems = items.filter(
+        (item: ReminderItem) => item.isRecipient !== false
       )
+
+      total += eligibleItems.length
+      unread += eligibleItems.filter(
+        (item) => !isReminderReadForSession(item, user.email)
+      ).length
+      totalPages = meta.totalPages
+      page += 1
+    } while (page <= totalPages)
+
+    setReminderSummary({ total, unread })
+  }, [accessToken, user?.email])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
       if (cancelled) return
-      setIsLoadingNotifications(false)
-      if (!ok) {
-        setNotificationError(error ?? "Could not load notifications")
-        setNotifications([])
-        return
-      }
-      setNotifications(items)
+      await loadNotifications()
+      if (cancelled) return
+      await loadReminderSummary()
     })()
     return () => {
       cancelled = true
     }
-  }, [user?.email, role, accessToken])
+  }, [loadNotifications, loadReminderSummary, role])
 
   const activeNotification = useMemo(() => {
     return notifications.find(
@@ -109,6 +156,38 @@ export default function DashboardPage() {
     () => notifications.filter((item) => !item.isRead),
     [notifications]
   )
+  const statsNotificationSummary = useMemo(() => {
+    const total = notifications.length
+    const read = notifications.filter((item) => item.isRead).length
+    return { total, read }
+  }, [notifications])
+  const totalNotifications = statsNotificationSummary.total
+  const readNotifications = statsNotificationSummary.read
+  const totalReminders = reminderSummary.total
+  const readReminders = totalReminders - reminderSummary.unread
+
+  const stats = [
+    {
+      label: "Total Notifications",
+      value: String(totalNotifications),
+      note: `${unreadNotifications.length} unread`,
+    },
+    {
+      label: "Read Notifications",
+      value: String(readNotifications),
+      note: `${totalNotifications} total`,
+    },
+    {
+      label: "Total reminders",
+      value: String(totalReminders),
+      note: `${reminderSummary.unread} unread`,
+    },
+    {
+      label: "Read Reminders",
+      value: String(readReminders),
+      note: `${totalReminders} total`,
+    },
+  ]
 
   useEffect(() => {
     if (!isReady) return
@@ -120,16 +199,6 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!activeNotification) return
     const timer = window.setTimeout(() => {
-      void (async () => {
-        await markNotificationsReadApi(accessToken, [activeNotification._id])
-        setNotifications((prev) =>
-          prev.map((item) =>
-            item._id === activeNotification._id
-              ? { ...item, isRead: true }
-              : item
-          )
-        )
-      })()
       setDismissedNotificationIds((prev) =>
         prev.includes(activeNotification._id)
           ? prev
@@ -138,7 +207,31 @@ export default function DashboardPage() {
     }, 5000)
 
     return () => window.clearTimeout(timer)
-  }, [accessToken, activeNotification])
+  }, [activeNotification])
+
+  useEffect(() => {
+    if (!user?.email) return
+
+    const syncNotifications = () => {
+      void loadNotifications()
+    }
+
+    const syncReminders = () => {
+      void loadReminderSummary()
+    }
+
+    window.addEventListener(NOTIFICATION_READ_UPDATED_EVENT, syncNotifications)
+    window.addEventListener("reminder-count-updated", syncReminders)
+    window.addEventListener("storage", syncNotifications)
+    window.addEventListener("storage", syncReminders)
+
+    return () => {
+      window.removeEventListener(NOTIFICATION_READ_UPDATED_EVENT, syncNotifications)
+      window.removeEventListener("reminder-count-updated", syncReminders)
+      window.removeEventListener("storage", syncNotifications)
+      window.removeEventListener("storage", syncReminders)
+    }
+  }, [loadNotifications, loadReminderSummary, user?.email])
 
   if (!isReady || !isAuthenticated) {
     return (
@@ -258,83 +351,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="mt-12 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <Card className="border-white/10 bg-white/5 text-white">
-            <CardHeader>
-              <CardTitle>Command Center</CardTitle>
-              <CardDescription className="text-zinc-400">
-                A compact overview of user activity, approvals, and access
-                events with a focus on what needs attention now.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Card className="border-white/10 bg-black/30 text-white">
-                  <CardHeader>
-                    <CardDescription className="text-zinc-400">
-                      Pending reviews
-                    </CardDescription>
-                    <CardTitle>12</CardTitle>
-                  </CardHeader>
-                </Card>
-                <Card className="border-white/10 bg-black/30 text-white">
-                  <CardHeader>
-                    <CardDescription className="text-zinc-400">
-                      New invites
-                    </CardDescription>
-                    <CardTitle>34</CardTitle>
-                  </CardHeader>
-                </Card>
-                <Card className="border-white/10 bg-black/30 text-white">
-                  <CardHeader>
-                    <CardDescription className="text-zinc-400">
-                      Admins online
-                    </CardDescription>
-                    <CardTitle>5</CardTitle>
-                  </CardHeader>
-                </Card>
-                <Card className="border-white/10 bg-black/30 text-white">
-                  <CardHeader>
-                    <CardDescription className="text-zinc-400">
-                      Teams
-                    </CardDescription>
-                    <CardTitle>16</CardTitle>
-                  </CardHeader>
-                </Card>
-              </div>
-
-              <div className="mt-6 overflow-x-auto">
-                <p className="text-sm font-medium text-zinc-300">
-                  Recent activity
-                </p>
-                <Table className="mt-3 min-w-[320px] text-white">
-                  <TableHeader>
-                    <TableRow className="border-white/10">
-                      <TableHead className="text-zinc-400">User</TableHead>
-                      <TableHead className="text-zinc-400">Action</TableHead>
-                      <TableHead className="text-right text-zinc-400">
-                        Time
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {activity.map((row) => (
-                      <TableRow key={row.name} className="border-white/10">
-                        <TableCell>{row.name}</TableCell>
-                        <TableCell className="text-zinc-300">
-                          {row.action}
-                        </TableCell>
-                        <TableCell className="text-right text-zinc-400">
-                          {row.time}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-
+        <section className="mt-12 grid gap-6 lg:grid-cols-1">
           <Card className="border-white/10 bg-gradient-to-br from-indigo-500/20 via-sky-500/10 to-emerald-500/20 text-white">
             <CardHeader>
               <CardTitle>Notifications</CardTitle>

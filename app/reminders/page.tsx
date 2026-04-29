@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   AlarmClock,
+  ArrowLeft,
   BellRing,
   CheckCheck,
   ChevronLeft,
@@ -228,6 +229,14 @@ export default function RemindersPage() {
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
           <div className="relative flex flex-col gap-6 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
             <div className="flex items-start gap-5">
+               <Link
+                href="/dashboard"
+                className="mb-0 mt-1 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-amber-200 hover:border-amber-300/30 hover:bg-amber-500/15 hover:text-amber-100"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full border border-amber-300/20 bg-white/10">
+                  <ArrowLeft className="h-5.0 w-5.5 inline-block ml-0" />
+                </span>
+              </Link>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-400/25 bg-gradient-to-br from-amber-500/30 via-amber-500/20 to-orange-500/15 text-amber-300 shadow-lg shadow-amber-500/20 ring-1 ring-amber-400/20">
                 <AlarmClock className="h-7 w-7" strokeWidth={1.75} />
               </div>
@@ -400,25 +409,7 @@ export default function RemindersPage() {
               </>
             )}
           </CardContent>
-        </Card>
-
-        <p className="mt-10 flex justify-center gap-4">
-          <Link
-            href="/notifications"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-          >
-            <BellRing className="h-4 w-4" />
-            Notifications
-          </Link>
-
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-zinc-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            Dashboard
-          </Link>
-        </p>
+        </Card> 
       </main>
     </div>
   );
