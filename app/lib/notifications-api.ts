@@ -2,7 +2,11 @@
  * Notifications via Express API (MongoDB). Bearer + credentials for refresh cookie.
  */
 
-import { API_BASE, authHeaders, readJsonSafe } from "./api-config";
+import {
+  API_BASE,
+  fetchWithAuthRetry,
+  readJsonSafe,
+} from "./api-config";
 
 export type NotificationTargetType = "admin" | "user" | "all" | "users";
 
@@ -160,12 +164,11 @@ export async function fetchNotificationsForUser(
     if (params?.read !== undefined) {
       q.set("read", params.read ? "true" : "false");
     }
-    const res = await fetch(
+    const res = await fetchWithAuthRetry(
       `${API_BASE}/api/notifications?${q.toString()}`,
+      accessToken,
       {
         method: "GET",
-        headers: authHeaders(accessToken),
-        credentials: "include",
       }
     );
     if (!res.ok) {
@@ -205,10 +208,8 @@ export async function fetchNotificationsAdmin(
     q.set("page", String(params?.page ?? 1));
     q.set("limit", String(params?.limit ?? 200));
     if (params?.search) q.set("search", params.search);
-    const res = await fetch(`${API_BASE}/api/notifications?${q.toString()}`, {
+    const res = await fetchWithAuthRetry(`${API_BASE}/api/notifications?${q.toString()}`, accessToken, {
       method: "GET",
-      headers: authHeaders(accessToken),
-      credentials: "include",
     });
     if (!res.ok) {
       const err = await readJsonSafe<ErrorResponse>(res);
@@ -276,10 +277,8 @@ export async function createNotificationApi(
   body: Omit<StoredNotification, "id" | "createdAt" | "updatedAt">
 ): Promise<{ ok: boolean; item?: StoredNotification; error?: string }> {
   try {
-    const res = await fetch(`${API_BASE}/api/notifications`, {
+    const res = await fetchWithAuthRetry(`${API_BASE}/api/notifications`, accessToken, {
       method: "POST",
-      headers: authHeaders(accessToken),
-      credentials: "include",
       body: JSON.stringify(toNotificationApiBody(body)),
     });
     if (!res.ok) {
@@ -309,12 +308,11 @@ export async function updateNotificationApi(
   >
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuthRetry(
       `${API_BASE}/api/notifications/${encodeURIComponent(id)}`,
+      accessToken,
       {
         method: "PATCH",
-        headers: authHeaders(accessToken),
-        credentials: "include",
         body: JSON.stringify(toNotificationPatchBody(body)),
       }
     );
@@ -336,12 +334,11 @@ export async function deleteNotificationApi(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuthRetry(
       `${API_BASE}/api/notifications/${encodeURIComponent(id)}`,
+      accessToken,
       {
         method: "DELETE",
-        headers: authHeaders(accessToken),
-        credentials: "include",
       }
     );
     if (!res.ok) {
@@ -368,12 +365,11 @@ export async function markNotificationsReadApi(
   if (!notificationIds.length) return { ok: true };
   try {
     for (const id of notificationIds) {
-      const res = await fetch(
+      const res = await fetchWithAuthRetry(
         `${API_BASE}/api/notifications/${encodeURIComponent(id)}/read`,
+        accessToken,
         {
           method: "PATCH",
-          headers: authHeaders(accessToken),
-          credentials: "include",
         }
       );
       if (!res.ok && res.status !== 204) {
@@ -399,12 +395,11 @@ export async function sendReminderApi(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuthRetry(
       `${API_BASE}/api/notifications/${encodeURIComponent(id)}/remind`,
+      accessToken,
       {
         method: "POST",
-        headers: authHeaders(accessToken),
-        credentials: "include",
       }
     );
     if (!res.ok) {
@@ -555,10 +550,8 @@ export async function fetchReminders(
       q.set("read", params.read ? "true" : "false");
     }
 
-    const res = await fetch(`${API_BASE}/api/reminders?${q.toString()}`, {
+    const res = await fetchWithAuthRetry(`${API_BASE}/api/reminders?${q.toString()}`, accessToken, {
       method: "GET",
-      headers: authHeaders(accessToken),
-      credentials: "include",
     });
     if (!res.ok) {
       const err = await readJsonSafe<ErrorResponse>(res);
@@ -602,12 +595,11 @@ export async function markReminderReadApi(
   reminderId: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuthRetry(
       `${API_BASE}/api/reminders/${encodeURIComponent(reminderId)}/read`,
+      accessToken,
       {
         method: "PATCH",
-        headers: authHeaders(accessToken),
-        credentials: "include",
       }
     );
     if (!res.ok && res.status !== 204) {

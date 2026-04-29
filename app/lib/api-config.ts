@@ -41,3 +41,25 @@ export function authHeaders(accessToken: string | null): HeadersInit {
   }
   return h;
 }
+
+export async function fetchWithAuthRetry(
+  input: RequestInfo | URL,
+  accessToken: string | null,
+  init?: RequestInit
+): Promise<Response> {
+  const firstResponse = await fetch(input, {
+    ...init,
+    headers: authHeaders(accessToken),
+    credentials: "include",
+  });
+
+  if (firstResponse.status !== 401 || !accessToken) {
+    return firstResponse;
+  }
+
+  return fetch(input, {
+    ...init,
+    headers: authHeaders(null),
+    credentials: "include",
+  });
+}
