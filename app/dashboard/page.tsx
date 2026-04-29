@@ -285,12 +285,12 @@ export default function DashboardPage() {
                 interface built for clarity.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link
+               {/* <Link
                   href="/login"
                   className={cn(buttonVariants({ size: "lg" }))}
                 >
                   Get Started
-                </Link>
+                </Link> */}
                 
                 <Dialog>
                   <DialogTrigger
@@ -305,13 +305,13 @@ export default function DashboardPage() {
                     <DialogHeader>
                       <DialogTitle>Quick tour</DialogTitle>
                       <DialogDescription className="text-zinc-400">
-                        A 30-second overview of the core workflow.
+                        The overview of the core workflow.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3 text-sm text-zinc-300">
-                      <p>1. Invite users and assign a default role.</p>
-                      <p>2. Configure access rules per team.</p>
-                      <p>3. Review activity in real time.</p>
+                      <p>1. Create new users and assign specific access roles.</p>
+                      <p>2. Set up automated notifications for system events from administrators.</p>
+                      <p>3. Schedule and track important task reminders.</p>
                     </div>
                     <DialogFooter>
                       <DialogClose

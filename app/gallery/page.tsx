@@ -87,7 +87,11 @@ export const metadata = {
 
 export default function GalleryPage() {
   return (
-    <PageShell variant="light" maxWidth="wide">
+    <PageShell
+      variant="dark"
+      maxWidth="wide"
+      className="bg-[radial-gradient(circle_at_top,_rgba(94,234,212,0.18),_transparent_55%),radial-gradient(circle_at_20%_20%,_rgba(56,189,248,0.16),_transparent_45%),linear-gradient(160deg,_#020617,_#0f172a_45%,_#020617)]"
+    >
       <GalleryGrid items={galleryItems} />
     </PageShell>
   )

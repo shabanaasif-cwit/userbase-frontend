@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowRight, ChevronDown, ChevronUp, ImageIcon } from "lucide-react"
+import { ChevronDown, ChevronUp, ImageIcon } from "lucide-react"
 
 const INITIAL_VISIBLE = 6
 
@@ -18,14 +18,14 @@ function GalleryCard({ item }: { item: GalleryItem }) {
   const [imageError, setImageError] = useState(false)
 
   return (
-    <Card className="overflow-hidden border-zinc-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 cursor-pointer">
-      <div className="relative h-48 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+    <Card className="cursor-pointer overflow-hidden border-white/10 bg-slate-800/55 shadow-sm transition hover:-translate-y-1 hover:shadow-lg backdrop-blur-sm">
+      <div className="relative h-48 w-full overflow-hidden bg-slate-900/70">
         {imageError ? (
           <div
-            className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-sky-200 via-emerald-100 to-amber-100 dark:from-sky-900 dark:via-emerald-900 dark:to-amber-900"
+            className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-sky-900 via-emerald-900 to-amber-900"
             aria-hidden
           >
-            <ImageIcon className="h-12 w-12 text-zinc-400 dark:text-zinc-500" />
+            <ImageIcon className="h-12 w-12 text-zinc-500" />
           </div>
         ) : (
           <Image
@@ -40,12 +40,10 @@ function GalleryCard({ item }: { item: GalleryItem }) {
         )}
       </div>
       <CardHeader>
-        <CardTitle className="text-lg">{item.title}</CardTitle>
+        <CardTitle className="text-lg text-white">{item.title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-zinc-600 dark:text-zinc-300">
-          {item.description}
-        </p>
+        <p className="text-sm text-zinc-300">{item.description}</p>
       </CardContent>
     </Card>
   )
@@ -60,13 +58,13 @@ export function GalleryGrid({ items }: { items: GalleryItem[] }) {
     <>
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">
             Gallery
           </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white">
             Highlights &amp; Moments
           </h1>
-          <p className="mt-3 max-w-2xl text-zinc-600 dark:text-zinc-300">
+          <p className="mt-3 max-w-2xl text-zinc-300">
             A quick look at the capabilities and experiences shaped by the User
             Management System.
           </p>
@@ -74,7 +72,7 @@ export function GalleryGrid({ items }: { items: GalleryItem[] }) {
         {hasMore && (
           <Button
             variant="outline"
-            className="gap-2 shrink-0"
+            className="shrink-0 gap-2"
             onClick={() => setShowAll((v) => !v)}
           >
             {showAll ? (

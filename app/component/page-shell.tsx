@@ -29,7 +29,7 @@ interface PageShellProps {
  */
 export default function PageShell({
   children,
-  variant = "light",
+  variant = "dark",
   maxWidth = "default",
   className,
 }: PageShellProps) {
