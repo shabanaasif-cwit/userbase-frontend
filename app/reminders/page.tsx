@@ -14,6 +14,7 @@ import {
   isReminderReadForSession,
   rememberReadReminderId,
 } from "@/lib/reminder-read-session";
+import { REMINDERS_SYNC_EVENT } from "@/lib/socket-events";
 import {
   Card,
   CardContent,
@@ -168,6 +169,20 @@ export default function RemindersPage() {
     void updateReminderCount();
   }, [reminders, updateReminderCount]);
 
+  useEffect(() => {
+    if (!isReady || !isAuthenticated) return;
+
+    const syncReminders = () => {
+      void load();
+      void updateReminderCount();
+    };
+
+    window.addEventListener(REMINDERS_SYNC_EVENT, syncReminders);
+    return () => {
+      window.removeEventListener(REMINDERS_SYNC_EVENT, syncReminders);
+    };
+  }, [isAuthenticated, isReady, load, updateReminderCount]);
+
   const handleMarkRead = async (id: string) => {
   setBusyId(id);
   const res = await markReminderReadApi(accessToken, id);
@@ -231,8 +246,7 @@ export default function RemindersPage() {
             <div className="flex items-start gap-5">
                <Link
                 href="/dashboard"
-                className="mb-0 mt-1 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-amber-200 hover:border-amber-300/30 hover:bg-amber-500/15 hover:text-amber-100"
-              >
+                className="mb-0 mt-1 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-amber-200 hover:border-amber-300/30 hover:bg-amber-500/15 hover:text-amber-100">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full border border-amber-300/20 bg-white/10">
                   <ArrowLeft className="h-5.0 w-5.5 inline-block ml-0" />
                 </span>
@@ -280,8 +294,7 @@ export default function RemindersPage() {
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="Search Reminders..."
-                  className="h-10 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-500/40 focus:bg-white/10"
-                />
+                  className="h-10 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-amber-500/40 focus:bg-white/10" />
               </div>
 
               <select
@@ -373,7 +386,6 @@ export default function RemindersPage() {
                   <p>
                     Page {pagination.page} of {pagination.totalPages}
                   </p>
-
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"

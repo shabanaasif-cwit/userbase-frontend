@@ -63,7 +63,6 @@ function getInitials(name?: string | null, email?: string | null) {
   if (parts.length === 1) {
     return parts[0].slice(0, 1).toUpperCase();
   }
-
   return "U";
 }
 

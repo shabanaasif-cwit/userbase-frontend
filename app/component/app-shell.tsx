@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/lib/auth-context";
 import Header from "./header";
 import Footer from "./footer";
+import SocketSync from "./socket-sync";
 
 interface AppShellProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SocketSync />
       <Header
         role={role}
         isAuthenticated={isAuthenticated}

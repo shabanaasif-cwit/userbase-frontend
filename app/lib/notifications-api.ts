@@ -48,7 +48,7 @@ export function wasNotificationEdited(
 
 /** Backend uses `body`; UI/store uses `message`. */
 function textFromApi(raw: Record<string, unknown>): string {
-  return String(raw.body ?? raw.message ?? "");
+  return String(raw.body ?? raw.message ?? "");0
 }
 
 function pickId(raw: Record<string, unknown>): string {

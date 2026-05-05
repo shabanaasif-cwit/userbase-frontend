@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import PageShell from "../component/page-shell"
 
-export const dynamic = "force-dynamic" // SSR: always fresh for support info
-
 export const metadata = {
   title: "Support | Userbase",
   description:
@@ -92,16 +90,15 @@ export default function SupportPage() {
                 </CardContent>
               </Card>
             </div>
-
-            <Card className="mt-8 border-white/10 bg-gradient-to-r from-indigo-500/20 via-sky-500/20 to-emerald-500/20 text-white">
-              <CardHeader>
-                <CardTitle className="text-base">Office hours</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-base font-medium">Mon–Fri, 9:00–18:00</p>
-              </CardContent>
-            </Card>
-          </CardContent>
+              <Card className="mt-8 border-white/10 bg-gradient-to-r from-indigo-500/20 via-sky-500/20 to-emerald-500/20 text-white">
+                <CardHeader>
+                  <CardTitle className="text-base">Office hours</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-base font-medium">Mon–Fri, 9:00–18:00</p>
+                </CardContent>
+              </Card>
+            </CardContent>
         </Card>
     </PageShell>
   )

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { NOTIFICATIONS_SYNC_EVENT } from "@/lib/socket-events";
 import {
   fetchNotificationsAdmin,
   createNotificationApi,
@@ -117,6 +118,17 @@ export default function AdminNotificationsPage() {
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  useEffect(() => {
+    const syncNotifications = () => {
+      void load();
+    };
+
+    window.addEventListener(NOTIFICATIONS_SYNC_EVENT, syncNotifications);
+    return () => {
+      window.removeEventListener(NOTIFICATIONS_SYNC_EVENT, syncNotifications);
+    };
   }, [load]);
 
   const resetForm = useCallback(() => {

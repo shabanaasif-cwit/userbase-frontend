@@ -8,8 +8,6 @@ import {
 } from "@/components/ui/card"
 import WelcomeCTA from "@/app/component/welcome-cta"
 
-export const dynamic = "force-dynamic"
-
 const highlights = [
   {
     title: "Clear roles, fewer surprises",

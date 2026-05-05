@@ -102,7 +102,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (!isReady) return;
     if (isAuthenticated) {
-      router.replace(isAdmin(role) ? "/admin/dashboard" : "/dashboard");
+      router.replace(isAdmin(role) ? "/admin/dashboard" : "/profile");
     }
   }, [isReady, isAuthenticated, role, router]);
 
