@@ -10,6 +10,10 @@ import {
 } from "@/lib/notification-read-persistence"
 import { isReminderReadForSession } from "@/lib/reminder-read-session"
 import {
+  NOTIFICATIONS_SYNC_EVENT,
+  REMINDERS_SYNC_EVENT,
+} from "@/lib/socket-events"
+import {
   fetchReminders,
   fetchNotificationsForUser,
   type ReminderItem,
@@ -171,21 +175,25 @@ export default function DashboardPage() {
       label: "Total Notifications",
       value: String(totalNotifications),
       note: `${unreadNotifications.length} unread`,
+      href: "/notifications",
     },
     {
       label: "Read Notifications",
       value: String(readNotifications),
       note: `${totalNotifications} total`,
+      href: "/notifications",
     },
     {
       label: "Total reminders",
       value: String(totalReminders),
       note: `${reminderSummary.unread} unread`,
+      href: "/reminders",
     },
     {
       label: "Read Reminders",
       value: String(readReminders),
       note: `${totalReminders} total`,
+      href: "/reminders",
     },
   ]
 
@@ -221,12 +229,16 @@ export default function DashboardPage() {
     }
 
     window.addEventListener(NOTIFICATION_READ_UPDATED_EVENT, syncNotifications)
+    window.addEventListener(NOTIFICATIONS_SYNC_EVENT, syncNotifications)
+    window.addEventListener(REMINDERS_SYNC_EVENT, syncReminders)
     window.addEventListener("reminder-count-updated", syncReminders)
     window.addEventListener("storage", syncNotifications)
     window.addEventListener("storage", syncReminders)
 
     return () => {
       window.removeEventListener(NOTIFICATION_READ_UPDATED_EVENT, syncNotifications)
+      window.removeEventListener(NOTIFICATIONS_SYNC_EVENT, syncNotifications)
+      window.removeEventListener(REMINDERS_SYNC_EVENT, syncReminders)
       window.removeEventListener("reminder-count-updated", syncReminders)
       window.removeEventListener("storage", syncNotifications)
       window.removeEventListener("storage", syncReminders)
@@ -285,12 +297,6 @@ export default function DashboardPage() {
                 interface built for clarity.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-               {/* <Link
-                  href="/login"
-                  className={cn(buttonVariants({ size: "lg" }))}
-                >
-                  Get Started
-                </Link> */}
                 
                 <Dialog>
                   <DialogTrigger
@@ -330,22 +336,21 @@ export default function DashboardPage() {
 
             <div className="grid w-full max-w-md grid-cols-2 gap-4">
               {stats.map((item) => (
-                <Card
-                  key={item.label}
-                  className="border-white/10 bg-white/5 text-white"
-                >
-                  <CardHeader>
-                    <CardDescription className="text-zinc-400">
-                      {item.label}
-                    </CardDescription>
-                    <CardTitle className="text-2xl font-semibold">
-                      {item.value}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-xs text-emerald-300">
-                    {item.note}
-                  </CardContent>
-                </Card>
+                <Link key={item.label} href={item.href} className="block">
+                  <Card className="cursor-pointer border-white/10 bg-white/5 text-white transition hover:bg-white/10">
+                    <CardHeader>
+                      <CardDescription className="text-zinc-400">
+                        {item.label}
+                      </CardDescription>
+                      <CardTitle className="text-2xl font-semibold">
+                        {item.value}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-xs text-emerald-300">
+                      {item.note}
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>

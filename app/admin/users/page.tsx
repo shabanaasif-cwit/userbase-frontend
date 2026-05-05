@@ -449,9 +449,7 @@ export default function AdminUsersPage() {
               </div>
             </div>
           </CardContent>
-        </Card>
-
-      
+        </Card>      
       </main>
 
       {/* Edit dialog */}

@@ -9,6 +9,10 @@ import {
   persistReadNotificationIds,
 } from "@/lib/notification-read-persistence";
 import {
+  NOTIFICATIONS_SYNC_EVENT,
+  REMINDERS_SYNC_EVENT,
+} from "@/lib/socket-events";
+import {
   fetchNotificationsForUser,
   fetchReminders,
   markNotificationsReadApi,
@@ -165,6 +169,7 @@ const Header: FC<HeaderProps> = ({
     };
 
     window.addEventListener(NOTIFICATION_READ_UPDATED_EVENT, syncNotifications);
+    window.addEventListener(NOTIFICATIONS_SYNC_EVENT, syncNotifications);
     window.addEventListener("storage", syncNotifications);
 
     return () => {
@@ -172,6 +177,7 @@ const Header: FC<HeaderProps> = ({
         NOTIFICATION_READ_UPDATED_EVENT,
         syncNotifications
       );
+      window.removeEventListener(NOTIFICATIONS_SYNC_EVENT, syncNotifications);
       window.removeEventListener("storage", syncNotifications);
     };
   }, [isAuthenticated, loadNotifications, userEmail]);
@@ -215,10 +221,12 @@ const Header: FC<HeaderProps> = ({
 
     syncReminderCount();
 
+    window.addEventListener(REMINDERS_SYNC_EVENT, handleReminderCountUpdate);
     window.addEventListener("reminder-count-updated", handleReminderCountUpdate);
     window.addEventListener("storage", syncReminderCount);
 
     return () => {
+      window.removeEventListener(REMINDERS_SYNC_EVENT, handleReminderCountUpdate);
       window.removeEventListener(
         "reminder-count-updated",
         handleReminderCountUpdate
@@ -239,7 +247,6 @@ const Header: FC<HeaderProps> = ({
 
   const displayCount = useMemo(() => {
     if (notificationCount <= 0) return "0";
-    if (notificationCount > 99) return "99+";
     return String(notificationCount);
   }, [notificationCount]);
 

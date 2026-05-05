@@ -8,6 +8,7 @@ import {
   mergeWithPersistedReadState,
   persistReadNotificationIds,
 } from "@/lib/notification-read-persistence";
+import { NOTIFICATIONS_SYNC_EVENT } from "@/lib/socket-events";
 import {
   fetchNotificationsForUser,
   markNotificationsReadApi,
@@ -90,6 +91,28 @@ export default function NotificationsPage() {
       cancelled = true;
     };
   }, [user?.email, role, accessToken]);
+
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const syncNotifications = async () => {
+      const { ok, items, error } = await fetchNotificationsForUser(
+        accessToken,
+        { page: 1, limit: 100 }
+      );
+      if (!ok) {
+        setLoadError(error ?? "Failed to load");
+        return;
+      }
+      setLoadError("");
+      setNotifications(mergeWithPersistedReadState(items, user.email));
+    };
+
+    window.addEventListener(NOTIFICATIONS_SYNC_EVENT, syncNotifications);
+    return () => {
+      window.removeEventListener(NOTIFICATIONS_SYNC_EVENT, syncNotifications);
+    };
+  }, [accessToken, user?.email]);
 
   const handleReadAll = async () => {
     if (user?.email && unreadNotifications.length > 0) {

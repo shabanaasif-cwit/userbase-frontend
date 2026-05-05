@@ -112,7 +112,6 @@ export default function AdminDashboardPage() {
             </Card>
           </Link>
         </div>
-
       </main>
     </div>
   );

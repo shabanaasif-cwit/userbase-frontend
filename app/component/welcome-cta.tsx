@@ -20,15 +20,19 @@ export default function WelcomeCTA() {
 
   return (
     <div className="mt-8 flex flex-wrap gap-3">
-      <Link href="/signup" className={cn(buttonVariants({ size: "lg" }))}>
-        Create account
-      </Link>
-      <Link
-        href="/login"
-        className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
-      >
-        Sign in
-      </Link>
+      {!isAuthenticated && (
+        <>
+          <Link href="/signup" className={cn(buttonVariants({ size: "lg" }))}>
+            Create account
+          </Link>
+          <Link
+            href="/login"
+            className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+          >
+            Sign in
+          </Link>
+        </>
+      )}
       <button
         type="button"
         onClick={handleViewDashboard}

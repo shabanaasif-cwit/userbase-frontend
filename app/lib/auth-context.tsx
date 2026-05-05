@@ -728,6 +728,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthContextValue = {
     user: mounted ? user : null,
+    //If user exists, authenticated is true. If user does not exist, authenticated is false
     isAuthenticated: !!user,
     role: user?.role ?? "user",
     accessToken: mounted ? accessToken : null,
