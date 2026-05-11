@@ -27,6 +27,7 @@ export function connectSocket(accessToken: string): Socket {
 
   activeToken = accessToken;
   socket = io(socketUrl(), {
+    // Force WebSocket transport to avoid issues with long polling in some environments
     transports: ["websocket"],
     withCredentials: true,
     auth: {

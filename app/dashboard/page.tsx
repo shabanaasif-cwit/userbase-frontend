@@ -20,7 +20,7 @@ import {
   wasNotificationEdited,
 } from "@/lib/notifications-api"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -46,6 +46,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type NotificationItem = {
@@ -58,14 +59,6 @@ type NotificationItem = {
   updatedAt?: string
   isRead?: boolean
 }
-
-const activity = [
-  { name: "Ayesha Khan", action: "Role updated", time: "2m ago" },
-  { name: "Dev Team", action: "New invite", time: "18m ago" },
-  { name: "Ops Admin", action: "Password reset", time: "1h ago" },
-  { name: "Marketing", action: "Access approved", time: "3h ago" },
-]
-
 export default function DashboardPage() {
   const router = useRouter()
   const { user, isAuthenticated, isReady, role, accessToken } = useAuth()
@@ -73,6 +66,7 @@ export default function DashboardPage() {
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false)
   const [notificationError, setNotificationError] = useState("")
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([])
+  const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null)
   const [reminderSummary, setReminderSummary] = useState({ total: 0, unread: 0 })
 
   const loadNotifications = useCallback(async () => {
@@ -197,7 +191,7 @@ export default function DashboardPage() {
     },
   ]
 
-  useEffect(() => {
+  useEffect(() => { 
     if (!isReady) return
     if (!isAuthenticated) {
       router.replace("/login")
@@ -373,7 +367,8 @@ export default function DashboardPage() {
                 unreadNotifications.slice(0, 5).map((item) => (
                   <div
                     key={item._id}
-                    className="rounded-2xl border border-white/10 bg-black/30 p-4"
+                    className="cursor-pointer rounded-2xl border border-white/10 bg-black/30 p-4"
+                    onClick={() => setSelectedNotification(item)}
                   >
                     <p className="text-base font-medium text-white">
                       {item.title}
@@ -412,6 +407,45 @@ export default function DashboardPage() {
           </Card>
         </section>
       </main>
+
+      {selectedNotification && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dashboard-notification-title"
+        >
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 bg-white/[0.02] px-6 py-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                  Notification
+                </p>
+                <h2
+                  id="dashboard-notification-title"
+                  className="mt-1.5 text-xl font-semibold leading-tight text-white"
+                >
+                  {selectedNotification.title}
+                </h2>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 cursor-pointer rounded-xl text-zinc-400 hover:bg-white/10 hover:text-white"
+                onClick={() => setSelectedNotification(null)}
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm leading-relaxed text-zinc-300">
+                {selectedNotification.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

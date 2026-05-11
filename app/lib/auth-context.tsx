@@ -11,6 +11,10 @@ import {
 import { API_BASE, authHeaders, readJsonSafe } from "./api-config";
 import { clearReadReminderSession } from "./reminder-read-session";
 
+// Session is stored in localStorage to persist across page reloads and browser sessions. 
+// The session is also validated and refreshed on app load by calling the /api/auth/me endpoint,
+// which checks the refresh cookie and returns the current user and access token if valid. 
+// This allows the app to restore the user's authenticated state even after a full page reload, as long as the refresh cookie is still valid on the server side.
 const AUTH_STORAGE_KEY = "userbase:auth-session";
 
 export type ManagedUser = {

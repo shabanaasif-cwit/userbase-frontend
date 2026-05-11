@@ -234,11 +234,11 @@ export default function AdminNotificationsPage() {
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-zinc-950 via-zinc-950/98 to-zinc-900" />
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(56,189,248,0.06),transparent)]" />
 
-      <main className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+      <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <section className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-zinc-900/80 shadow-xl shadow-black/20 backdrop-blur-sm">
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-500/15 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl" />
-          <div className="relative flex items-start gap-4 px-6 py-10 sm:px-12 sm:py-12">
+          <div className="relative flex items-start gap-5 px-6 py-10 sm:px-8 sm:py-12">
             <Link
                 href="/admin/dashboard"
                 className="mb-0 mt-1 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-sky-200 hover:border-sky-300/30 hover:bg-sky-500/15 hover:text-sky-100"
@@ -303,9 +303,7 @@ export default function AdminNotificationsPage() {
                       <TableHead className="font-semibold text-zinc-200">Target</TableHead>
                       <TableHead className="font-semibold text-zinc-200">Created By</TableHead>
                       <TableHead className="font-semibold text-zinc-200">Created At</TableHead>
-                      <TableHead className="text-right font-semibold text-zinc-200">
-                        Actions
-                      </TableHead>
+                      <TableHead className="text-left pl-8 font-semibold text-zinc-200">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -315,7 +313,7 @@ export default function AdminNotificationsPage() {
                         className="border-white/[0.06] transition-colors hover:bg-sky-500/5"
                       >
                         <TableCell className="font-medium text-white">
-                          {n.title}
+                          {n.title.length > 32 ? `${n.title.slice(0, 32)}...` : n.title}
                         </TableCell>
                         <TableCell className="max-w-[200px] truncate text-zinc-400">
                           {n.message || "—"}

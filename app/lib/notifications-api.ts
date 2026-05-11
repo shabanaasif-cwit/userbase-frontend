@@ -48,7 +48,7 @@ export function wasNotificationEdited(
 
 /** Backend uses `body`; UI/store uses `message`. */
 function textFromApi(raw: Record<string, unknown>): string {
-  return String(raw.body ?? raw.message ?? "");0
+  return String(raw.body ?? raw.message ?? "");
 }
 
 function pickId(raw: Record<string, unknown>): string {
@@ -339,6 +339,7 @@ export async function deleteNotificationApi(
       accessToken,
       {
         method: "DELETE",
+        body: JSON.stringify({ notificationId: id }),
       }
     );
     if (!res.ok) {
@@ -370,6 +371,7 @@ export async function markNotificationsReadApi(
         accessToken,
         {
           method: "PATCH",
+          body: JSON.stringify({ notificationId: id }),
         }
       );
       if (!res.ok && res.status !== 204) {
@@ -400,6 +402,7 @@ export async function sendReminderApi(
       accessToken,
       {
         method: "POST",
+        body: JSON.stringify({ notificationId: id }),
       }
     );
     if (!res.ok) {
@@ -600,6 +603,7 @@ export async function markReminderReadApi(
       accessToken,
       {
         method: "PATCH",
+        body: JSON.stringify({ reminderId }),
       }
     );
     if (!res.ok && res.status !== 204) {

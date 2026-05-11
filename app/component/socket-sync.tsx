@@ -22,7 +22,8 @@ type ReminderEnvelope = {
   };
 };
 
-//send a custom event globally on window when a socket event is received, so that any component can listen for it and update accordingly
+//send a custom event globally on window when a socket event is received, 
+// so that any component can listen for it and update accordingly
 function dispatchWindowEvent(name: string) {
   window.dispatchEvent(new CustomEvent(name));
 }
